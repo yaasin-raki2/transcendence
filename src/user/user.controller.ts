@@ -1,34 +1,88 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	NotFoundException,
+	InternalServerErrorException
+} from "@nestjs/common";
+import { UserService } from "./user.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { User } from "./entities/user.entity";
 
-@Controller('user')
+@Controller("user")
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+	constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
+	@Post()
+	async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.create(createUserDto);
+		} catch (error) {
+			if (error.message === "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
+	}
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
+	@Get()
+	async findAll(): Promise<User[]> {
+		let users: User[];
+		try {
+			users = await this.userService.findAll();
+		} catch (error) {
+			if (error.message === "No users found")
+				throw new NotFoundException("No users found");
+			throw new InternalServerErrorException(error.message);
+		}
+		return users;
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
+	@Get(":id")
+	async findOne(@Param("id") id: string): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.findOne(+id);
+		} catch (error) {
+			if (error.message == "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
+	}
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
+	@Patch(":id")
+	async update(
+		@Param("id") id: string,
+		@Body() updateUserDto: UpdateUserDto
+	): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.update(+id, updateUserDto);
+		} catch (error) {
+			if (error.message === "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
-  }
+	@Delete(":id")
+	async remove(@Param("id") id: string) {
+		let user: User;
+		try {
+			user = await this.userService.remove(+id);
+		} catch (error) {
+			if (error.message === "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
+	}
 }
