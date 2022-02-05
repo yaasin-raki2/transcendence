@@ -2,13 +2,22 @@ import { Module, ValidationPipe } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_PIPE } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { CookieSessionModule } from "nestjs-cookie-session";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { UserModule } from "./user/user.module";
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ isGlobal: true }),
+		ConfigModule.forRoot({
+			isGlobal: true
+		}),
+		CookieSessionModule.forRoot({
+			session: {
+				name: "session",
+				secret: process.env.COOKIE_SECRET
+			}
+		}),
 		TypeOrmModule.forRoot({
 			type: "postgres",
 			host: process.env.POSTGRES_HOST,

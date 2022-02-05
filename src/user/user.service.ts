@@ -10,7 +10,10 @@ export class UserService {
 	constructor(@InjectRepository(User) private readonly repo: Repository<User>) {}
 
 	async create(createUserDto: CreateUserDto): Promise<User> {
-		const user = await this.repo.create(createUserDto);
+		let user: User;
+		user = await this.repo.findOne({ where: [{ logging: createUserDto.logging }] });
+		if (user) throw new Error("User already exists");
+		user = await this.repo.create(createUserDto);
 		return this.repo.save(user);
 	}
 
@@ -23,7 +26,13 @@ export class UserService {
 	async findOne(id: number): Promise<User> {
 		const user = await this.repo.findOne(id);
 		if (!user) throw new Error("User not found");
-		return this.repo.findOne(id);
+		return user;
+	}
+
+	async findOneByLogging(logging: string): Promise<User> {
+		const user = await this.repo.findOne({ where: [{ logging }] });
+		if (!user) throw new Error("User not found");
+		return user;
 	}
 
 	async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
