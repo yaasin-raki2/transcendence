@@ -12,12 +12,12 @@ import { UserModule } from "./user/user.module";
 		ConfigModule.forRoot({
 			isGlobal: true
 		}),
-		CookieSessionModule.forRoot({
-			session: {
-				name: "session",
-				secret: process.env.COOKIE_SECRET
-			}
-		}),
+		//CookieSessionModule.forRoot({
+		//	session: {
+		//		name: "session",
+		//		secret: process.env.COOKIE_SECRET
+		//	}
+		//}),
 		TypeOrmModule.forRoot({
 			type: "postgres",
 			host: process.env.POSTGRES_HOST,

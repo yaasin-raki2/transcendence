@@ -9,7 +9,7 @@ import {
 } from "@nestjs/common";
 import { Response } from "express";
 import { Readable } from "stream";
-import { DatabaseFile } from "../entities/databaseFile.entity";
+import { DatabaseFile } from "../entities/database-file.entity";
 import { DatabaseFilesService } from "../services/database-files.service";
 
 @Controller("database-files")

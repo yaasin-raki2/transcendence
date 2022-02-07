@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { QueryRunner, Repository } from "typeorm";
-import { DatabaseFile } from "../entities/databaseFile.entity";
+import { DatabaseFile } from "../entities/database-file.entity";
 
 @Injectable()
 export class DatabaseFilesService {

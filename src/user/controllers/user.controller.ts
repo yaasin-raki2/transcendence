@@ -14,33 +14,32 @@ import {
 	UnauthorizedException,
 	Res,
 	UseInterceptors,
-	UploadedFile
+	UploadedFile,
+	Req,
+	BadRequestException,
+	HttpCode
 } from "@nestjs/common";
 import { UserService } from "../services/user.service";
-import { CreateUserDto } from "../dto/create-user.dto";
-import { UpdateUserDto } from "../dto/update-user.dto";
+import { CreateUserDto } from "../dtos/create-user.dto";
+import { UpdateUserDto } from "../dtos/update-user.dto";
 import { User } from "../entities/user.entity";
-import { AuthGuard } from "../guards/auth-guard.guard";
 import { Response } from "express";
 import axios from "axios";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Express } from "express";
-import { DatabaseFile } from "../entities/databaseFile.entity";
-
-interface Iintra {
-	data: {
-		access_token: string;
-		token_type: string;
-		expires_in: number;
-		refresh_token: string;
-		scope: string;
-		created_at: Date;
-	};
-}
+import { DatabaseFile } from "../entities/database-file.entity";
+import { Intra } from "../interfaces/intra.interface";
+import { JwtGuard } from "../guards/jwt.guard";
+import { RequestWithUser } from "../interfaces/request-with-user.interface";
+import { PostgresErrorCode } from "../enums/postgres-error-code.enum";
+import { TwoFactorAuthenticationService } from "../services/two-factor-authentication.service";
 
 @Controller("user")
 export class UserController {
-	constructor(private readonly userService: UserService) {}
+	constructor(
+		private readonly userService: UserService,
+		private readonly twFactorAuthenticationService: TwoFactorAuthenticationService
+	) {}
 
 	@Get("oauth/signup")
 	oauthSignup(@Res() res: Response) {
@@ -57,12 +56,13 @@ export class UserController {
 	}
 
 	@Get("loginXsignup")
+	@HttpCode(200)
 	async signup(
-		@Session() session: Record<string, any>,
 		@Query("code") code: string,
-		@Query("state") state: string
-	): Promise<User> {
-		const { data }: Iintra = await axios.post(
+		@Query("state") state: string,
+		@Res() res: Response
+	): Promise<Response<any, Record<string, any>>> {
+		const { data }: Intra = await axios.post(
 			`https://api.intra.42.fr/oauth/token?grant_type=authorization_code&client_id=${process.env.INTRA_UID}&client_secret=${process.env.INTRA_SECRET}&code=${code}&redirect_uri=${process.env.INTRA_REDIRECT_URI}&state=${state}`
 		);
 		const token = data.access_token;
@@ -70,6 +70,7 @@ export class UserController {
 			headers: { Authorization: `Bearer ${token}` }
 		});
 		let user: User;
+		let jwtToken: string;
 		if (state === "signup") {
 			const createUserDto: CreateUserDto = {
 				logging: student.login,
@@ -77,25 +78,33 @@ export class UserController {
 			};
 			try {
 				user = await this.userService.create(createUserDto);
+				jwtToken =
+					await this.twFactorAuthenticationService.getCookieWithJwtAccessToken(
+						user.id
+					);
 			} catch (error) {
-				if (error.message === "User already exists")
+				if (error?.message === "User already exists")
 					throw new UnauthorizedException("User already exists");
+				else if (error?.code === PostgresErrorCode.UniqueViolation)
+					throw new BadRequestException("User with that email already exists");
 				else throw new InternalServerErrorException(error.message);
 			}
-			session.id = user.id;
-			return user;
 		} else if (state === "login") {
 			const logging = student.login;
 			try {
 				user = await this.userService.findOneByLogging(logging);
+				jwtToken =
+					await this.twFactorAuthenticationService.getCookieWithJwtAccessToken(
+						user.id
+					);
 			} catch (error) {
 				if (error.message === "User not found")
 					throw new NotFoundException("User not found");
 				else throw new InternalServerErrorException(error.message);
 			}
-			session.id = user.id;
-			return user;
 		}
+		res.setHeader("Set-Cookie", jwtToken);
+		return res.send(user);
 	}
 
 	@Get()
@@ -112,7 +121,7 @@ export class UserController {
 	}
 
 	@Get(":id")
-	@UseGuards(AuthGuard)
+	@UseGuards(JwtGuard)
 	async findOne(@Param("id") id: string): Promise<User> {
 		let user: User = null;
 		try {
@@ -126,15 +135,14 @@ export class UserController {
 	}
 
 	@Patch(":id")
-	@UseGuards(AuthGuard)
+	@UseGuards(JwtGuard)
 	async update(
 		@Param("id") id: string,
 		@Body() updateUserDto: UpdateUserDto,
-		@Session() session: { id: string }
+		@Req() { user }: RequestWithUser
 	): Promise<User> {
-		if (session.id != id)
+		if (user.id !== +id)
 			throw new UnauthorizedException("You are not authorized to update this user");
-		let user: User;
 		try {
 			user = await this.userService.update(+id, updateUserDto);
 		} catch (error) {
@@ -146,14 +154,13 @@ export class UserController {
 	}
 
 	@Delete(":id")
-	@UseGuards(AuthGuard)
+	@UseGuards(JwtGuard)
 	async remove(
 		@Param("id") id: string,
-		@Session() session: { id: string }
+		@Req() { user }: RequestWithUser
 	): Promise<User> {
-		if (session.id !== id)
+		if (user.id !== +id)
 			throw new UnauthorizedException("You are not authorized to delete this user");
-		let user: User;
 		try {
 			user = await this.userService.remove(+id);
 		} catch (error) {
@@ -165,20 +172,12 @@ export class UserController {
 	}
 
 	@Post("avatar")
-	@UseGuards(AuthGuard)
+	@UseGuards(JwtGuard)
 	@UseInterceptors(FileInterceptor("file"))
 	async addAvatar(
 		@UploadedFile() file: Express.Multer.File,
-		@Session() session: { id: string }
+		@Req() { user }: RequestWithUser
 	): Promise<DatabaseFile> {
-		let user: User;
-		try {
-			user = await this.userService.findOne(+session.id);
-		} catch (error) {
-			if (error.message === "User not found")
-				throw new NotFoundException("User not found");
-			else throw new InternalServerErrorException(error.message);
-		}
 		return this.userService.addAvatar(user.id, file.buffer, file.originalname);
 	}
 }

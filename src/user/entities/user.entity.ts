@@ -1,12 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne } from "typeorm";
-import { DatabaseFile } from "./databaseFile.entity";
+import { DatabaseFile } from "./database-file.entity";
 
 @Entity()
 export class User {
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column()
+	@Column({ unique: true })
 	logging: string;
 
 	@Column()
@@ -18,4 +18,10 @@ export class User {
 
 	@Column({ nullable: true })
 	avatarId?: number;
+
+	@Column({ default: false })
+	isTwoFactorAuthenticationEnabled: boolean;
+
+	@Column({ nullable: true })
+	twoFactorAuthenticationSecret?: string;
 }
