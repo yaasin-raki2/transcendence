@@ -18,7 +18,7 @@ import { FriendRequestService } from "../services/friend-request.service";
 export class FriendRequestController {
 	constructor(private friendRequestService: FriendRequestService) {}
 
-	@Post("friend-request/send/:receiverId")
+	@Post("send/:receiverId")
 	@UseGuards(JwtGuard)
 	async sendFriendRequest(
 		@Param("receiverId") receiverStringId: string,
@@ -38,7 +38,7 @@ export class FriendRequestController {
 		return friendRequest;
 	}
 
-	@Get("friend-request/status/:receiverId")
+	@Get("status/:receiverId")
 	@UseGuards(JwtGuard)
 	async getFriendRequestStatus(
 		@Param("receiverId") receiverStringId: string,
@@ -57,7 +57,7 @@ export class FriendRequestController {
 		return friendRequestStatus;
 	}
 
-	@Put("friend-request/response/:friendRequestId")
+	@Put("response/:friendRequestId")
 	@UseGuards(JwtGuard)
 	async respondToFriendRequest(
 		@Param("friendRequestId") friendRequestStringId: string,
@@ -76,7 +76,7 @@ export class FriendRequestController {
 		return friendRequestStatus;
 	}
 
-	@Get("friend-request/me/received-requests")
+	@Get("me/received-requests")
 	@UseGuards(JwtGuard)
 	async getFriendRequestsFromRecipients(@Request() req): Promise<FriendRequest[]> {
 		let friendRequests: FriendRequest[];
