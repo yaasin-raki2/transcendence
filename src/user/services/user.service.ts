@@ -1,7 +1,6 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Connection, Repository, UpdateResult } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { UpdateUserDto } from "../dtos/update-user.dto";
 import { DatabaseFile } from "../entities/database-file.entity";
@@ -13,7 +12,6 @@ export class UserService {
 	constructor(
 		@InjectRepository(User) private readonly usersRepository: Repository<User>,
 		private readonly databaseFilesService: DatabaseFilesService,
-		private readonly jwtService: JwtService,
 		private readonly connection: Connection
 	) {}
 
@@ -25,10 +23,6 @@ export class UserService {
 		if (user) throw new Error("User already exists");
 		user = await this.usersRepository.create(createUserDto);
 		return this.usersRepository.save(user);
-	}
-
-	async createJwtCredentials(user: User): Promise<string> {
-		return this.jwtService.signAsync({ user });
 	}
 
 	async findAll(): Promise<User[]> {
@@ -95,20 +89,5 @@ export class UserService {
 		} finally {
 			await queryRunner.release();
 		}
-	}
-
-	async setTwoFactorAuthenticationSecret(
-		secret: string,
-		userId: number
-	): Promise<UpdateResult> {
-		return this.usersRepository.update(userId, {
-			twoFactorAuthenticationSecret: secret
-		});
-	}
-
-	async turnOnTwoFactorAuthentication(userId: number): Promise<UpdateResult> {
-		return this.usersRepository.update(userId, {
-			isTwoFactorAuthenticationEnabled: true
-		});
 	}
 }

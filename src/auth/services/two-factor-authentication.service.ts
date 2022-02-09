@@ -1,18 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { Response } from "express";
 import { authenticator } from "otplib";
-import { User } from "../entities/user.entity";
-import { UserService } from "./user.service";
+import { User } from "../../user/entities/user.entity";
+import { UserService } from "../../user/services/user.service";
 import { toFileStream } from "qrcode";
-import { TokenPayload } from "../interfaces/token-payload.interface";
-import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class TwoFactorAuthenticationService {
-	constructor(
-		private readonly userService: UserService,
-		private readonly jwtService: JwtService
-	) {}
+	constructor(private readonly userService: UserService) {}
 
 	async generateTwoFactorAuthenticationSecret(
 		user: User
@@ -23,7 +18,7 @@ export class TwoFactorAuthenticationService {
 			process.env.TWO_FACTOR_AUTHENTICATION_APP_NAME,
 			secret
 		);
-		await this.userService.setTwoFactorAuthenticationSecret(secret, user.id);
+		await this.setTwoFactorAuthenticationSecret(secret, user.id);
 		return {
 			secret,
 			otpauthUrl
@@ -41,18 +36,30 @@ export class TwoFactorAuthenticationService {
 		});
 	}
 
-	getCookieWithJwtAccessToken(
-		userId: number,
-		isSecondFactorAuthenticated: boolean = false
-	): string {
-		const payload: TokenPayload = {
-			userId,
-			isSecondFactorAuthenticated
-		};
-		const token = this.jwtService.sign(payload, {
-			secret: process.env.JWT_SECRET,
-			expiresIn: process.env.JWT_EXPIRATION_TIME
-		});
-		return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${process.env.JWT_EXPIRATION_TIME}`;
+	async setTwoFactorAuthenticationSecret(
+		secret: string,
+		userId: number
+	): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.update(userId, {
+				twoFactorAuthenticationSecret: secret
+			});
+		} catch (error) {
+			throw new Error("User not found");
+		}
+		return user;
+	}
+
+	async turnOnTwoFactorAuthentication(userId: number): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.update(userId, {
+				isTwoFactorAuthenticationEnabled: true
+			});
+		} catch (error) {
+			throw new Error("User not found");
+		}
+		return user;
 	}
 }

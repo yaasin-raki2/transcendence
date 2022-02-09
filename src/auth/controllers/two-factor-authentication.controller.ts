@@ -1,7 +1,9 @@
 import {
 	Body,
 	Controller,
+	forwardRef,
 	HttpCode,
+	Inject,
 	Post,
 	Req,
 	Res,
@@ -9,18 +11,19 @@ import {
 	UseGuards
 } from "@nestjs/common";
 import { Response } from "express";
-import { TwofactorAuthenticationDto } from "../dtos/two-factor-authentication-code.dto";
-import { User } from "../entities/user.entity";
+import { TwofactorAuthenticationDto } from "../../user/dtos/two-factor-authentication-code.dto";
+import { User } from "../../user/entities/user.entity";
 import { JwtGuard } from "../guards/jwt.guard";
 import { RequestWithUser } from "../interfaces/request-with-user.interface";
 import { TwoFactorAuthenticationService } from "../services/two-factor-authentication.service";
-import { UserService } from "../services/user.service";
+import { UserService } from "../../user/services/user.service";
+import { AuthService } from "../services/auth.service";
 
 @Controller("2fa")
 export class TwoFactorAuthenticationController {
 	constructor(
 		private readonly twoFactorAuthenticationService: TwoFactorAuthenticationService,
-		private readonly userService: UserService
+		private readonly authService: AuthService
 	) {}
 
 	@Post("generate")
@@ -49,7 +52,7 @@ export class TwoFactorAuthenticationController {
 				user
 			);
 		if (!isCodeValid) throw new UnauthorizedException("Wrong authentication code");
-		await this.userService.turnOnTwoFactorAuthentication(user.id);
+		await this.twoFactorAuthenticationService.turnOnTwoFactorAuthentication(user.id);
 	}
 
 	@Post("authenticate")
@@ -65,11 +68,10 @@ export class TwoFactorAuthenticationController {
 				req.user
 			);
 		if (!isCodeValid) throw new UnauthorizedException("Wrong authentication code");
-		const accessTokenCookie =
-			this.twoFactorAuthenticationService.getCookieWithJwtAccessToken(
-				req.user.id,
-				true
-			);
+		const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
+			req.user.id,
+			true
+		);
 		req.res.setHeader("Set-Cookie", [accessTokenCookie]);
 		return req.user;
 	}
