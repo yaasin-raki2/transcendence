@@ -12,6 +12,9 @@ import { JwtModule } from "@nestjs/jwt";
 import { JwtGuard } from "../auth/guards/jwt.guard";
 import { JwtStrategy } from "../auth/guards/jwt.strategy";
 import { AuthModule } from "src/auth/auth.module";
+import { FriendRequest } from "./entities/friend-request.entity";
+import { FriendRequestService } from './services/friend-request.service';
+import { FriendRequestController } from './controllers/friend-request.controller';
 
 @Module({
 	imports: [
@@ -23,20 +26,22 @@ import { AuthModule } from "src/auth/auth.module";
 				}
 			})
 		}),
-		TypeOrmModule.forFeature([User, DatabaseFile]),
+		TypeOrmModule.forFeature([User, DatabaseFile, FriendRequest]),
 		forwardRef(() => AuthModule)
 	],
 	controllers: [
 		UserController,
 		DatabaseFilesController,
-		TwoFactorAuthenticationController
+		TwoFactorAuthenticationController,
+		FriendRequestController
 	],
 	providers: [
 		UserService,
 		DatabaseFilesService,
 		TwoFactorAuthenticationService,
 		JwtGuard,
-		JwtStrategy
+		JwtStrategy,
+		FriendRequestService
 	],
 	exports: [
 		TypeOrmModule.forFeature([User, DatabaseFile]),

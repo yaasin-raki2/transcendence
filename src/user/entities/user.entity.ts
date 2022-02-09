@@ -1,5 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne } from "typeorm";
+import {
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	JoinColumn,
+	OneToOne,
+	OneToMany
+} from "typeorm";
 import { DatabaseFile } from "./database-file.entity";
+import { FriendRequest } from "./friend-request.entity";
 
 @Entity()
 export class User {
@@ -13,7 +21,7 @@ export class User {
 	username: string;
 
 	@JoinColumn({ name: "avatarId" })
-	@OneToOne(type => DatabaseFile, { nullable: true })
+	@OneToOne(() => DatabaseFile, { nullable: true })
 	avatar?: DatabaseFile;
 
 	@Column({ nullable: true })
@@ -24,4 +32,13 @@ export class User {
 
 	@Column({ nullable: true })
 	twoFactorAuthenticationSecret?: string;
+
+	@OneToMany(() => FriendRequest, friendRequest => friendRequest.creator)
+	sentFriendRequests: FriendRequest[];
+
+	@OneToMany(() => FriendRequest, friendRequest => friendRequest.reciever)
+	receivedFriendRequests: FriendRequest[];
+
+	@Column({ default: "online" })
+	status: string;
 }
