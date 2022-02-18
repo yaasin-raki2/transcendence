@@ -58,7 +58,7 @@ export class UserController {
 	@UseGuards(JwtGuard)
 	async update(
 		@Param("id") id: string,
-		@Body() updateUserDto: UpdateUserDto,
+		@Body() updateUserDto: any,
 		@Req() { user }: RequestWithUser
 	): Promise<User> {
 		if (user.id !== +id)
