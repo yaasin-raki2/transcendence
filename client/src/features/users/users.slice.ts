@@ -10,6 +10,13 @@ export const usersApi = createApi({
       query: () => "user",
       providesTags: ["User"],
     }),
+    getUserById: builder.query<User, number>({
+      query: (id) => ({
+        url: `user/${id}`,
+        credentials: "include",
+      }),
+      providesTags: ["User"],
+    }),
     updateUser: builder.mutation<User, Partial<User>>({
       query: ({ id, ...patch }) => ({
         url: `user/${id}`,
@@ -22,4 +29,10 @@ export const usersApi = createApi({
   }),
 });
 
-export const { useGetAllUsersQuery, useUpdateUserMutation } = usersApi;
+export const {
+  useGetAllUsersQuery,
+  useGetUserByIdQuery,
+  useUpdateUserMutation,
+  useLazyGetAllUsersQuery,
+  useLazyGetUserByIdQuery,
+} = usersApi;
