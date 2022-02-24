@@ -9,7 +9,7 @@ import {
 export const HomePage = () => {
   const [getAllUsers, res] = useLazyGetAllUsersQuery();
   const [updateUser, { data }] = useUpdateUserMutation();
-  const [value, setValue] = useState("Hi");
+  const [value, setValue] = useState("1");
 
   const users = res.data;
 
@@ -34,6 +34,9 @@ export const HomePage = () => {
       {data?.username}
       <Link to="/profile">
         <Button text="Profile" />
+      </Link>
+      <Link to={`user/${value}`}>
+        <Button text="User" />
       </Link>
     </div>
   );

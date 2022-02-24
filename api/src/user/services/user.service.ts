@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import axios from "axios";
 import { Connection, Repository } from "typeorm";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { UpdateUserDto } from "../dtos/update-user.dto";
@@ -22,7 +23,15 @@ export class UserService {
 		});
 		if (user) throw new Error("User already exists");
 		user = await this.usersRepository.create(createUserDto);
-		return this.usersRepository.save(user);
+		user = await this.usersRepository.save(user);
+		const profileImageBuffer = await this.imageUrlToBuffer(createUserDto.image_url);
+		const { id } = await this.addAvatar(
+			user.id,
+			profileImageBuffer,
+			createUserDto.logging
+		);
+		user.avatarId = id;
+		return user;
 	}
 
 	async findAll(): Promise<User[]> {
@@ -32,7 +41,9 @@ export class UserService {
 	}
 
 	async findOne(id: number): Promise<User> {
-		const user = await this.usersRepository.findOne(id);
+		const user = await this.usersRepository.findOne(id, {
+			relations: ["avatar"]
+		});
 		if (!user) throw new Error("User not found");
 		return user;
 	}
@@ -89,5 +100,21 @@ export class UserService {
 		} finally {
 			await queryRunner.release();
 		}
+	}
+
+	async getUserWithAvatar(userId: number): Promise<User> {
+		const user = await this.usersRepository.findOne(userId, {
+			relations: ["avatar"]
+		});
+		if (!user) throw new Error("User not found");
+		return user;
+	}
+
+	async imageUrlToBuffer(image_url: string): Promise<Buffer> {
+		const { data: image } = await axios.get(image_url, {
+			responseType: "arraybuffer"
+		});
+		const buffer = Buffer.from(image, "utf-8");
+		return buffer;
 	}
 }

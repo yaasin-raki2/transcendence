@@ -58,7 +58,8 @@ export class AuthController {
 		if (state === "signup") {
 			const createUserDto: CreateUserDto = {
 				logging: student.login,
-				username: student.first_name
+				username: student.first_name,
+				image_url: student.image_url
 			};
 			try {
 				user = await this.userService.create(createUserDto);

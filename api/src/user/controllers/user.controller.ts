@@ -95,9 +95,22 @@ export class UserController {
 	@UseGuards(JwtGuard)
 	@UseInterceptors(FileInterceptor("file"))
 	async addAvatar(
-		@UploadedFile() file: Express.Multer.File,
-		@Req() { user }: RequestWithUser
+		@UploadedFile() file,
+		@Req() req: RequestWithUser
 	): Promise<DatabaseFile> {
-		return this.userService.addAvatar(user.id, file.buffer, file.originalname);
+		return this.userService.addAvatar(req.user.id, file.buffer, file.originalname);
+	}
+
+	@Get("avatar/:id")
+	async getUserWithAvatar(@Param("id") id: string): Promise<User> {
+		let user: User = null;
+		try {
+			user = await this.userService.getUserWithAvatar(+id);
+		} catch (error) {
+			if (error.message === "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
 	}
 }

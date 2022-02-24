@@ -6,4 +6,7 @@ export class CreateUserDto {
 
 	@IsString()
 	username: string;
+
+	@IsString()
+	image_url: string;
 }

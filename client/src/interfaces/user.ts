@@ -1,3 +1,5 @@
+import { DatabaseFile } from "./database-file";
+
 export interface User {
   id: number;
 
@@ -5,7 +7,7 @@ export interface User {
 
   username: string;
 
-  avatar?: any;
+  avatar?: DatabaseFile;
 
   avatarId?: number;
 

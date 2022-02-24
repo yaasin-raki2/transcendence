@@ -26,6 +26,14 @@ export const usersApi = createApi({
       }),
       invalidatesTags: ["User"],
     }),
+    getUserWithAvatar: builder.query<User, number>({
+      query: (id) => ({
+        url: `user/avatar/${id}`,
+        method: "GET",
+        credentials: "include",
+      }),
+      providesTags: ["User"],
+    }),
   }),
 });
 
@@ -35,4 +43,5 @@ export const {
   useUpdateUserMutation,
   useLazyGetAllUsersQuery,
   useLazyGetUserByIdQuery,
+  useGetUserWithAvatarQuery,
 } = usersApi;
