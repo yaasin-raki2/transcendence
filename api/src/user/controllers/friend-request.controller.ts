@@ -7,16 +7,22 @@ import {
 	Put,
 	Get,
 	Body,
-	InternalServerErrorException
+	InternalServerErrorException,
+	NotFoundException
 } from "@nestjs/common";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { FriendRequest } from "../entities/friend-request.entity";
+import { User } from "../entities/user.entity";
 import { FriendRequestStatus } from "../interfaces/friend-request-status.interface";
 import { FriendRequestService } from "../services/friend-request.service";
+import { UserService } from "../services/user.service";
 
 @Controller("friend-request")
 export class FriendRequestController {
-	constructor(private friendRequestService: FriendRequestService) {}
+	constructor(
+		private readonly friendRequestService: FriendRequestService,
+		private readonly userService: UserService
+	) {}
 
 	@Post("send/:receiverId")
 	@UseGuards(JwtGuard)
@@ -87,5 +93,20 @@ export class FriendRequestController {
 			throw new InternalServerErrorException(error.message);
 		}
 		return friendRequests;
+	}
+
+	@Get("me/friends")
+	@UseGuards(JwtGuard)
+	async getFriends(@Request() req): Promise<User[]> {
+		let friends: User[];
+		try {
+			friends = await this.userService.findFriendsFromFriendRequests(req.user.id);
+		} catch (error) {
+			if (error.message === "User not found") {
+				throw new NotFoundException(error.message);
+			}
+			throw new InternalServerErrorException(error.message);
+		}
+		return friends;
 	}
 }

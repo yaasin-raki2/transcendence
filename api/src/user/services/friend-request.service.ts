@@ -17,11 +17,11 @@ export class FriendRequestService {
 		private readonly userService: UserService
 	) {}
 
-	async hasRequestBeenSentOrRecieved(creator: User, receiver: User): Promise<boolean> {
+	async hasRequestBeenSentOrRecieved(creator: User, reciever: User): Promise<boolean> {
 		const friendRequest = await this.friendRequestRepository.findOne({
 			where: [
-				{ creator, receiver },
-				{ creator: receiver, receiver: creator }
+				{ creator, reciever },
+				{ creator: reciever, reciever: creator }
 			]
 		});
 		return !friendRequest ? false : true;
@@ -61,7 +61,7 @@ export class FriendRequestService {
 
 		return friendRequestStatus;
 	}
-	Z;
+
 	async getFriendRequestUserById(id: number): Promise<FriendRequest> {
 		return await this.friendRequestRepository.findOne(id);
 	}
@@ -79,7 +79,7 @@ export class FriendRequestService {
 	async getFriendRequestsFromRecipients(currentUser: User): Promise<FriendRequest[]> {
 		return await this.friendRequestRepository.find({
 			relations: ["creator"],
-			where: [{ receiver: currentUser }]
+			where: [{ reciever: currentUser }]
 		});
 	}
 }

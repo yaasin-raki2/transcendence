@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { Button } from "../button";
 
 interface IProfileInfo {
   login: string;
@@ -6,12 +7,5 @@ interface IProfileInfo {
 }
 
 export const ProfileInfo: FC<IProfileInfo> = ({ login, username }) => {
-  return (
-    <div className="relative flex flex-wrap items-baseline pb-6 before:bg-black before:absolute before:-top-6 before:bottom-0 before:-left-60 before:-right-6">
-      <h1 className="relative w-full flex-none mb-2 text-2xl font-semibold text-white">
-        {username}
-      </h1>
-      <h3 className="relative text-base text-white">{login}</h3>
-    </div>
-  );
+  return <h1 className="text-2xl">username</h1>;
 };

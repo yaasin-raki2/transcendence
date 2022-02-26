@@ -41,9 +41,7 @@ export class UserService {
 	}
 
 	async findOne(id: number): Promise<User> {
-		const user = await this.usersRepository.findOne(id, {
-			relations: ["avatar"]
-		});
+		const user = await this.usersRepository.findOne(id);
 		if (!user) throw new Error("User not found");
 		return user;
 	}
@@ -116,5 +114,48 @@ export class UserService {
 		});
 		const buffer = Buffer.from(image, "utf-8");
 		return buffer;
+	}
+
+	async findOneWithFriendsRequests(id: number): Promise<User> {
+		let user: User;
+		try {
+			user = await this.usersRepository.findOne(id, {
+				relations: [
+					"sentFriendRequests",
+					"sentFriendRequests.reciever",
+					"receivedFriendRequests",
+					"receivedFriendRequests.creator"
+				]
+			});
+		} catch (error) {
+			console.log(error);
+		}
+		if (!user) throw new Error("User not found");
+		return user;
+	}
+
+	async findFriendsFromFriendRequests(id: number): Promise<User[]> {
+		let user: User;
+		try {
+			user = await this.findOneWithFriendsRequests(id);
+		} catch (error) {
+			if (error.message === "User not found") {
+				throw new Error("User not found");
+			} else {
+				throw new Error(error.message);
+			}
+		}
+		let friends: User[] = [];
+		user.receivedFriendRequests.forEach(friendRequest => {
+			if (friendRequest.status === "accepted") {
+				friends.push(friendRequest.creator);
+			}
+		});
+		user.sentFriendRequests.forEach(friendRequest => {
+			if (friendRequest.status === "accepted") {
+				friends.push(friendRequest.reciever);
+			}
+		});
+		return friends;
 	}
 }

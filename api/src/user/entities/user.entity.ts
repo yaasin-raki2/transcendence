@@ -33,10 +33,10 @@ export class User {
 	@Column({ nullable: true })
 	twoFactorAuthenticationSecret?: string;
 
-	@OneToMany(() => FriendRequest, friendRequest => friendRequest.creator)
+	@OneToMany(type => FriendRequest, friendRequest => friendRequest.creator)
 	sentFriendRequests: FriendRequest[];
 
-	@OneToMany(() => FriendRequest, friendRequest => friendRequest.reciever)
+	@OneToMany(type => FriendRequest, friendRequest => friendRequest.reciever)
 	receivedFriendRequests: FriendRequest[];
 
 	@Column({ default: "online" })

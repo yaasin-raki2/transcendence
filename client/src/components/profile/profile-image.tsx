@@ -1,40 +1,37 @@
 import { FC, useEffect } from "react";
 import { useAppDispatch, useAppSelctor } from "../../app/hook";
 import { setProfileImage } from "../../features/users/prosile-images.slice";
-import { DatabaseFile } from "../../interfaces/database-file";
+import { User } from "../../interfaces/user";
 
 interface IProfileImage {
-  src: DatabaseFile;
+  user: User;
   alt: string;
 }
 
-export const ProfileImage: FC<IProfileImage> = ({ src, alt }) => {
+export const parseImage = (image: Uint8Array) => {
+  const base64String = btoa(
+    new Uint8Array(image).reduce((data, byte) => data + String.fromCharCode(byte), "")
+  );
+  const imageUrl = `data:image/jpeg;base64,${base64String}`;
+  return imageUrl;
+};
+
+export const ProfileImage: FC<IProfileImage> = ({
+  user: { avatar: src, id: userId },
+  alt,
+}) => {
   const dispatch = useAppDispatch();
 
   const profileImage = useAppSelctor((state) =>
-    state.profileImages.find((image) => image.id === src.id)
+    state.profileImages.find((image) => image.id === userId)
   );
 
   useEffect(() => {
     if (!profileImage) {
-      const base64String = btoa(
-        new Uint8Array(src.data.data).reduce(
-          (data, byte) => data + String.fromCharCode(byte),
-          ""
-        )
-      );
-      const image = `data:image/jpeg;base64,${base64String}`;
-      dispatch(setProfileImage({ src: image, id: src.id }));
+      const image = parseImage(src?.data.data!);
+      dispatch(setProfileImage({ src: image, id: userId }));
     }
   }, [profileImage]);
 
-  return (
-    <div className="flex-none w-48 h-52 mb-10 relative z-10 before:absolute before:top-1 before:left-1 before:w-full before:h-full bg-red-500 hover:bg-red-700">
-      <img
-        src={profileImage?.src}
-        alt={alt}
-        className="absolute z-10 realative top-1 left-1 inset-0 w-full h-full object-cover"
-      />
-    </div>
-  );
+  return <img src={profileImage?.src} alt={alt} className="bg-blue-400 h-60 w-60" />;
 };
