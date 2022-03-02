@@ -7,10 +7,12 @@ import {
 	UnauthorizedException,
 	BadRequestException,
 	InternalServerErrorException,
-	NotFoundException
+	NotFoundException,
+	Post,
+	Req
 } from "@nestjs/common";
 import axios from "axios";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { CreateUserDto } from "src/user/dtos/create-user.dto";
 import { User } from "src/user/entities/user.entity";
 import { PostgresErrorCode } from "src/enums/postgres-error-code.enum";
@@ -45,7 +47,7 @@ export class AuthController {
 		@Query("code") code: string,
 		@Query("state") state: string,
 		@Res() res: Response
-	): Promise<Response<any, Record<string, any>>> {
+	): Promise<void> {
 		const { data }: Intra = await axios.post(
 			`https://api.intra.42.fr/oauth/token?grant_type=authorization_code&client_id=${process.env.INTRA_UID}&client_secret=${process.env.INTRA_SECRET}&code=${code}&redirect_uri=${process.env.INTRA_REDIRECT_URI}&state=${state}`
 		);
@@ -68,7 +70,7 @@ export class AuthController {
 				if (error?.message === "User already exists")
 					throw new UnauthorizedException("User already exists");
 				else if (error?.code === PostgresErrorCode.UniqueViolation)
-					throw new BadRequestException("User with that email already exists");
+					throw new BadRequestException("User with that login already exists");
 				else throw new InternalServerErrorException(error.message);
 			}
 		} else if (state === "login") {
@@ -83,6 +85,12 @@ export class AuthController {
 			}
 		}
 		res.setHeader("Set-Cookie", jwtToken);
-		return res.send(user);
+		res.redirect("http://localhost:4000/");
+	}
+
+	@Post("logout")
+	logout(@Res() res: Response): Response {
+		res.setHeader("Set-Cookie", this.authService.getCookieForLogOut());
+		return res.sendStatus(200);
 	}
 }

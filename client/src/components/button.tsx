@@ -5,7 +5,7 @@ interface IButton {
   onClick?: () => void;
 }
 
-export const Button: FC<IButton> = ({ text, onClick }) => {
+export const Button: FC<IButton> = ({ children, text, onClick }) => {
   return (
     <button
       className="bg-red-500 hover:bg-red-700 text-white
@@ -14,6 +14,7 @@ export const Button: FC<IButton> = ({ text, onClick }) => {
       onClick={onClick}
     >
       {text}
+      {children}
     </button>
   );
 };

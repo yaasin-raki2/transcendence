@@ -1,22 +1,19 @@
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/button";
 import { ChangeAvatarButton } from "../components/profile/change-avatar";
 import { ChangeUsernameButton } from "../components/profile/change-username";
 import { ProfileImage } from "../components/profile/profile-image";
-import { useGetUserWithAvatarQuery } from "../features/users/users.slice";
-import { FriendRequestStatus } from "../interfaces/friend-request-status.interface";
+import {
+  useAcceptorRejectFriendRequestMutation,
+  useGetUserWithAvatarQuery,
+} from "../features/users/users.slice";
 
 export const User = () => {
   const params = useParams();
   const { data: user } = useGetUserWithAvatarQuery(+params.id!);
 
-  const onFriendsClick = async () => {
-    const res = await axios.get("http://localhost:3000/api/friend-request/me/friends", {
-      withCredentials: true,
-    });
-    console.log(res.data);
-  };
+  const [acceptorRejectFriendRequest] = useAcceptorRejectFriendRequestMutation();
 
   const onRecievedRequestsClick = async () => {
     const res = await axios.get(
@@ -24,17 +21,6 @@ export const User = () => {
       {
         withCredentials: true,
       }
-    );
-    console.log(res.data);
-  };
-
-  const onAcceptFriendRequestClick = async () => {
-    const res = await axios.put(
-      "http://localhost:3000/api/friend-request/response/1",
-      {
-        status: "accepted",
-      },
-      { withCredentials: true }
     );
     console.log(res.data);
   };
@@ -52,9 +38,16 @@ export const User = () => {
             <div className="flex flex-col sm:flex-row justify-center items-center">
               <ChangeUsernameButton userId={user.id} />
               <ChangeAvatarButton userId={user.id} />
-              <Button text="Friends" onClick={onFriendsClick} />
-              <Button text="recievedRequests" onClick={onRecievedRequestsClick} />
-              <Button text="acceptFriendRequest" onClick={onAcceptFriendRequestClick} />
+              <Link to={`/friends/${params.id}`}>
+                <Button text="Friends" />
+              </Link>
+              <Link to={`/friends/recieved-requests/${params.id}`}>
+                <Button text="recievedRequests" />
+              </Link>
+              <Button
+                text="acceptFriendRequest"
+                onClick={() => acceptorRejectFriendRequest({ id: 1, status: "accepted" })}
+              />
             </div>
           </div>
         </div>

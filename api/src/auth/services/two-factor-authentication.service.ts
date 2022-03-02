@@ -62,4 +62,17 @@ export class TwoFactorAuthenticationService {
 		}
 		return user;
 	}
+
+	async turnOffTwoFactorAuthentication(userId: number): Promise<User> {
+		let user: User;
+		try {
+			user = await this.userService.update(userId, {
+				isTwoFactorAuthenticationEnabled: false,
+				twoFactorAuthenticationSecret: null
+			});
+		} catch (error) {
+			throw new Error("User not found");
+		}
+		return user;
+	}
 }

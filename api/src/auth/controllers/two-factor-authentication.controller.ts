@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	forwardRef,
+	Get,
 	HttpCode,
 	Inject,
 	Post,
@@ -26,17 +27,15 @@ export class TwoFactorAuthenticationController {
 		private readonly authService: AuthService
 	) {}
 
-	@Post("generate")
+	@Get("generate")
 	@UseGuards(JwtGuard)
-	async register(
-		@Res() response: Response,
-		@Req() { user }: RequestWithUser
-	): Promise<any> {
+	async register(@Res() response: Response, @Req() { user }: RequestWithUser) {
 		const { otpauthUrl } =
 			await this.twoFactorAuthenticationService.generateTwoFactorAuthenticationSecret(
 				user
 			);
-		return this.twoFactorAuthenticationService.pipeQrCodeStream(response, otpauthUrl);
+		//return this.twoFactorAuthenticationService.pipeQrCodeStream(response, otpauthUrl);
+		response.send(otpauthUrl);
 	}
 
 	@Post("turn-on")
@@ -74,5 +73,14 @@ export class TwoFactorAuthenticationController {
 		);
 		req.res.setHeader("Set-Cookie", [accessTokenCookie]);
 		return req.user;
+	}
+
+	@Post("turn-off")
+	@HttpCode(200)
+	@UseGuards(JwtGuard)
+	async turnOffTwoFactorAuthentication(
+		@Req() { user }: RequestWithUser
+	): Promise<void> {
+		await this.twoFactorAuthenticationService.turnOffTwoFactorAuthentication(user.id);
 	}
 }

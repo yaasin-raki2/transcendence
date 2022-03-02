@@ -6,9 +6,10 @@ import { User } from "../../interfaces/user";
 interface IProfileImage {
   user: User;
   alt: string;
+  imageStyle?: string;
 }
 
-export const parseImage = (image: Uint8Array) => {
+export const parseImage = (image: Uint8Array): string => {
   const base64String = btoa(
     new Uint8Array(image).reduce((data, byte) => data + String.fromCharCode(byte), "")
   );
@@ -19,6 +20,7 @@ export const parseImage = (image: Uint8Array) => {
 export const ProfileImage: FC<IProfileImage> = ({
   user: { avatar: src, id: userId },
   alt,
+  imageStyle = "h-64 w-64",
 }) => {
   const dispatch = useAppDispatch();
 
@@ -33,5 +35,5 @@ export const ProfileImage: FC<IProfileImage> = ({
     }
   }, [profileImage]);
 
-  return <img src={profileImage?.src} alt={alt} className="bg-blue-400 h-60 w-60" />;
+  return <img src={profileImage?.src} alt={alt} className={imageStyle} />;
 };

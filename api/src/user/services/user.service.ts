@@ -123,8 +123,10 @@ export class UserService {
 				relations: [
 					"sentFriendRequests",
 					"sentFriendRequests.reciever",
+					"sentFriendRequests.reciever.avatar",
 					"receivedFriendRequests",
-					"receivedFriendRequests.creator"
+					"receivedFriendRequests.creator",
+					"receivedFriendRequests.creator.avatar"
 				]
 			});
 		} catch (error) {

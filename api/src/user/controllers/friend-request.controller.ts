@@ -95,12 +95,12 @@ export class FriendRequestController {
 		return friendRequests;
 	}
 
-	@Get("me/friends")
+	@Get("me/friends/:id")
 	@UseGuards(JwtGuard)
-	async getFriends(@Request() req): Promise<User[]> {
+	async getFriends(@Param("id") id: number): Promise<User[]> {
 		let friends: User[];
 		try {
-			friends = await this.userService.findFriendsFromFriendRequests(req.user.id);
+			friends = await this.userService.findFriendsFromFriendRequests(id);
 		} catch (error) {
 			if (error.message === "User not found") {
 				throw new NotFoundException(error.message);

@@ -1,43 +1,91 @@
+import axios from "axios";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "../components/button";
+import QRCode from "qrcode";
 import {
-  useLazyGetAllUsersQuery,
-  useUpdateUserMutation,
+  useGetCurrentUserQuery,
+  useLogoutMutation,
+  useTurnOffTwoFactorAuthMutation,
+  useTurnOnTwoFactorAuthMutation,
 } from "../features/users/users.slice";
 
 export const HomePage = () => {
-  const [getAllUsers, res] = useLazyGetAllUsersQuery();
-  const [updateUser, { data }] = useUpdateUserMutation();
-  const [value, setValue] = useState("1");
+  const [qrCode, setQrCode] = useState<string>();
+  const [code2fa, setCode2fa] = useState<string>("");
 
-  const users = res.data;
+  let { data: user, isError, error } = useGetCurrentUserQuery();
+
+  if (isError) {
+    console.log(error);
+  }
+
+  console.log(user);
+
+  const on2FAClick = async () => {
+    const { data } = await axios.get("http://localhost:3000/api/2fa/generate", {
+      withCredentials: true,
+    });
+    QRCode.toDataURL(data, (err, url) => setQrCode(url));
+  };
+
+  const onAuth2FAClick = async () => {
+    await axios.post(
+      "http://localhost:3000/api/2fa/authenticate",
+      { code2fa },
+      { withCredentials: true }
+    );
+  };
+
+  const [turnOn2FA] = useTurnOnTwoFactorAuthMutation();
+  const [turnOff2FA] = useTurnOffTwoFactorAuthMutation();
+  const [logout] = useLogoutMutation();
+
+  const onLogoutClick = async () => {
+    await logout();
+    user = undefined;
+  };
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen">
-      <input
-        className="bg-gray-200 appearance-none border-2 border-gray-200 rounded-md"
-        name="huh"
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
+    <div className="flex flex-col justify-center items-center h-screen bg-yellow-500">
       <h1 className="text-center text-4xl font-bold">Home Page</h1>
-      <Button text="HuH" onClick={() => getAllUsers("", true)} />
-      {users?.map((user) => (
-        <h1 key={user.id}>{user.username}</h1>
-      ))}
-      <Button
-        text={"Update : " + value}
-        onClick={async () => updateUser({ id: 1, username: value })}
-      />
-      {data?.username}
-      <Link to="/profile">
-        <Button text="Profile" />
-      </Link>
-      <Link to={`user/${value}`}>
-        <Button text="User" />
-      </Link>
+      <Button text="">
+        <a href="http://localhost:3000/api/auth/oauth/signup">Sign Up</a>
+      </Button>
+      <Button text="">
+        <a href="http://localhost:3000/api/auth/oauth/login">Login</a>
+      </Button>
+      <Button text="Activate two factor authentication" onClick={on2FAClick} />
+      {qrCode && (
+        <div>
+          <img src={qrCode} alt="qrCode" />
+          <div className="flex justify-center items-center">
+            <Button text="Enter code" onClick={() => turnOn2FA({ code2fa })} />
+            <input
+              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded-md w-16"
+              type="text"
+              value={code2fa}
+              onChange={(e) => setCode2fa(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+      {user?.isTwoFactorAuthenticationEnabled ? (
+        <div className="flex flex-col justify-center items-center">
+          <div>
+            <Button text="Auth with 2FA" onClick={onAuth2FAClick} />
+            <input
+              className="bg-gray-200 appearance-none border-2 border-gray-200 rounded-md w-16"
+              type="text"
+              value={code2fa}
+              onChange={(e) => setCode2fa(e.target.value)}
+            />
+          </div>
+          <Button text="Turn Off 2FA" onClick={() => turnOff2FA()} />
+        </div>
+      ) : (
+        <h1>Two factor authentication is turned on</h1>
+      )}
+      {user && <Button text="Logout" onClick={logout} />}
     </div>
   );
 };

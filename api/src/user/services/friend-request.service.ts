@@ -78,7 +78,7 @@ export class FriendRequestService {
 
 	async getFriendRequestsFromRecipients(currentUser: User): Promise<FriendRequest[]> {
 		return await this.friendRequestRepository.find({
-			relations: ["creator"],
+			relations: ["creator", "creator.avatar"],
 			where: [{ reciever: currentUser }]
 		});
 	}

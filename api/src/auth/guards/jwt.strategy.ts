@@ -29,8 +29,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		} catch (error) {
 			throw new InternalServerErrorException();
 		}
-		if (!user.isTwoFactorAuthenticationEnabled) return user;
-		if (payload.isSecondFactorAuthenticated) return user;
-		if (this.url === "/api/2fa/authenticate") return user;
+		if (
+			!user.isTwoFactorAuthenticationEnabled ||
+			payload.isSecondFactorAuthenticated ||
+			this.url === "/api/2fa/authenticate" ||
+			this.url === "/api/2fa/turn-off" ||
+			this.url === "/api/user/me"
+		)
+			return user;
 	}
 }

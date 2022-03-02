@@ -40,6 +40,12 @@ export class UserController {
 		return users;
 	}
 
+	@Get("me")
+	@UseGuards(JwtGuard)
+	getMe(@Req() req: RequestWithUser): User {
+		return req.user;
+	}
+
 	@Get(":id")
 	@UseGuards(JwtGuard)
 	async findOne(@Param("id") id: string): Promise<User> {
