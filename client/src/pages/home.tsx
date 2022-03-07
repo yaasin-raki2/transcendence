@@ -13,13 +13,7 @@ export const HomePage = () => {
   const [qrCode, setQrCode] = useState<string>();
   const [code2fa, setCode2fa] = useState<string>("");
 
-  let { data: user, isError, error } = useGetCurrentUserQuery();
-
-  if (isError) {
-    console.log(error);
-  }
-
-  console.log(user);
+  let { data: user, isError } = useGetCurrentUserQuery();
 
   const on2FAClick = async () => {
     const { data } = await axios.get("http://localhost:3000/api/2fa/generate", {
@@ -39,11 +33,6 @@ export const HomePage = () => {
   const [turnOn2FA] = useTurnOnTwoFactorAuthMutation();
   const [turnOff2FA] = useTurnOffTwoFactorAuthMutation();
   const [logout] = useLogoutMutation();
-
-  const onLogoutClick = async () => {
-    await logout();
-    user = undefined;
-  };
 
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-yellow-500">
@@ -69,7 +58,7 @@ export const HomePage = () => {
           </div>
         </div>
       )}
-      {user?.isTwoFactorAuthenticationEnabled ? (
+      {user && !isError && user.isTwoFactorAuthenticationEnabled ? (
         <div className="flex flex-col justify-center items-center">
           <div>
             <Button text="Auth with 2FA" onClick={onAuth2FAClick} />
@@ -85,7 +74,7 @@ export const HomePage = () => {
       ) : (
         <h1>Two factor authentication is turned on</h1>
       )}
-      {user && <Button text="Logout" onClick={logout} />}
+      {user && !isError && <Button text="Logout" onClick={logout} />}
     </div>
   );
 };

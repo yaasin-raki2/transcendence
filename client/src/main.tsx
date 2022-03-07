@@ -9,6 +9,7 @@ import { Profile } from "./pages/profile";
 import { User } from "./pages/user";
 import { Friends } from "./pages/friends";
 import { RecievedFriendRequests } from "./pages/recieved-friend-requests";
+import { Chat } from "./pages/chat";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -17,6 +18,7 @@ ReactDOM.render(
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/user/:id" element={<User />} />
           <Route path="/friends/:id" element={<Friends />} />
           <Route

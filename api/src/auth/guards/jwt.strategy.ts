@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { User } from "../../user/entities/user.entity";
 import { TokenPayload } from "../interfaces/token-payload.interface";
 import { UserService } from "../../user/services/user.service";
+import { Socket } from "socket.io";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,9 +14,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 	constructor(private readonly userService: UserService) {
 		super({
 			jwtFromRequest: ExtractJwt.fromExtractors([
-				(req: Request) => {
+				(req: Request & Socket) => {
 					this.url = req.url;
-					return req?.cookies?.Authentication;
+					const ws_cookie = req?.handshake?.headers?.cookie?.split("=")[1];
+					const http_cookie = req?.cookies?.Authentication;
+					return ws_cookie ? ws_cookie : http_cookie;
 				}
 			]),
 			secretOrKey: process.env.JWT_SECRET

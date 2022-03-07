@@ -2,10 +2,14 @@ import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { User } from "src/user/entities/user.entity";
 import { TokenPayload } from "src/auth/interfaces/token-payload.interface";
+import { UserService } from "src/user/services/user.service";
 
 @Injectable()
 export class AuthService {
-	constructor(private readonly jwtService: JwtService) {}
+	constructor(
+		private readonly jwtService: JwtService,
+		private readonly userService: UserService
+	) {}
 
 	async createJwtCredentials(user: User): Promise<string> {
 		return this.jwtService.signAsync({ user });
@@ -28,5 +32,12 @@ export class AuthService {
 
 	getCookieForLogOut(): string {
 		return `Authentication=; HttpOnly; Path=/; Max-Age=0`;
+	}
+
+	getUserFromAuthenticationToken(token: string): Promise<User> {
+		const payload: TokenPayload = this.jwtService.verify(token, {
+			secret: process.env.JWT_ACCESS_TOKEN_SECRET
+		});
+		if (payload.userId) return this.userService.findOne(payload.userId);
 	}
 }
