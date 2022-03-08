@@ -159,4 +159,8 @@ export class UserService {
 		});
 		return friends;
 	}
+
+	async findOneWithRooms(id: number): Promise<User> {
+		return await this.usersRepository.findOne(id, { relations: ["rooms"] });
+	}
 }

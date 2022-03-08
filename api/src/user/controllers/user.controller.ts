@@ -15,10 +15,8 @@ import {
 	Req
 } from "@nestjs/common";
 import { UserService } from "../services/user.service";
-import { UpdateUserDto } from "../dtos/update-user.dto";
 import { User } from "../entities/user.entity";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { Express } from "express";
 import { DatabaseFile } from "../entities/database-file.entity";
 import { JwtGuard } from "../../auth/guards/jwt.guard";
 import { RequestWithUser } from "../../auth/interfaces/request-with-user.interface";
@@ -38,6 +36,19 @@ export class UserController {
 			throw new InternalServerErrorException(error.message);
 		}
 		return users;
+	}
+
+	@Get("/:id/rooms")
+	async getUserWithAvatarAndRooms(@Param("id") id: string): Promise<User> {
+		let user: User = null;
+		try {
+			user = await this.userService.findOneWithRooms(+id);
+		} catch (error) {
+			if (error.message === "User not found")
+				throw new NotFoundException("User not found");
+			else throw new InternalServerErrorException(error.message);
+		}
+		return user;
 	}
 
 	@Get("me")

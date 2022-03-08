@@ -4,9 +4,9 @@ import { AuthService } from "src/auth/services/auth.service";
 import { parse } from "cookie";
 import { User } from "src/user/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Room } from "./entities/room.entity";
+import { Room } from "../entities/room.entity";
 import { Repository } from "typeorm";
-import { CreateRoomDto } from "./dto/create-room.dto";
+import { CreateRoomDto } from "../dto/create-room.dto";
 import { WsException } from "@nestjs/websockets";
 
 @Injectable()

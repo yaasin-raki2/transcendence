@@ -5,7 +5,7 @@ import {
 	WsException,
 	ConnectedSocket
 } from "@nestjs/websockets";
-import { ChatService } from "./chat.service";
+import { ChatService } from "./services/chat.service";
 import { Socket } from "socket.io";
 import { User } from "src/user/entities/user.entity";
 import { CreateRoomDto } from "./dto/create-room.dto";

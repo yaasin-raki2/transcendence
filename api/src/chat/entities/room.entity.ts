@@ -1,5 +1,13 @@
 import { User } from "src/user/entities/user.entity";
-import { Column, Entity, JoinColumn, PrimaryGeneratedColumn, OneToOne } from "typeorm";
+import {
+	Column,
+	Entity,
+	JoinColumn,
+	PrimaryGeneratedColumn,
+	OneToOne,
+	ManyToMany,
+	JoinTable
+} from "typeorm";
 import { Room_State } from "../interfaces/room-state.interface";
 
 @Entity()
@@ -14,6 +22,10 @@ export class Room {
 	state: Room_State;
 
 	@JoinColumn({ name: "adminId" })
-	@OneToOne(() => User)
+	@OneToOne(type => User)
 	admin: User;
+
+	@ManyToMany(type => User, user => user.rooms)
+	@JoinTable()
+	members: User[];
 }

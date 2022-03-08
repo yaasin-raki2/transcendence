@@ -3,6 +3,8 @@ import { JwtService } from "@nestjs/jwt";
 import { User } from "src/user/entities/user.entity";
 import { TokenPayload } from "src/auth/interfaces/token-payload.interface";
 import { UserService } from "src/user/services/user.service";
+import { Socket } from "socket.io";
+import { parse } from "cookie";
 
 @Injectable()
 export class AuthService {
@@ -39,5 +41,14 @@ export class AuthService {
 			secret: process.env.JWT_ACCESS_TOKEN_SECRET
 		});
 		if (payload.userId) return this.userService.findOne(payload.userId);
+	}
+
+	async getUserFromSocket(socket: Socket): Promise<User | null> {
+		const cookie = socket.handshake.headers.cookie;
+		if (!cookie) throw new Error("Invalid credentials.");
+		const { Authentication: authenticationToken } = parse(cookie);
+		const user = await this.getUserFromAuthenticationToken(authenticationToken);
+		if (!user) throw new Error("Unauthorized");
+		return user;
 	}
 }

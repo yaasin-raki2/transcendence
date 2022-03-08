@@ -1,10 +1,12 @@
+import { Room } from "src/chat/entities/room.entity";
 import {
 	Entity,
 	Column,
 	PrimaryGeneratedColumn,
 	JoinColumn,
 	OneToOne,
-	OneToMany
+	OneToMany,
+	ManyToMany
 } from "typeorm";
 import { DatabaseFile } from "./database-file.entity";
 import { FriendRequest } from "./friend-request.entity";
@@ -41,4 +43,7 @@ export class User {
 
 	@Column({ default: "online" })
 	status: string;
+
+	@ManyToMany(type => Room, room => room.members)
+	rooms: Room[];
 }
