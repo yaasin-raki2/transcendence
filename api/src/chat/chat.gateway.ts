@@ -2,13 +2,13 @@ import {
 	WebSocketGateway,
 	SubscribeMessage,
 	MessageBody,
-	WebSocketServer,
 	WsException,
 	ConnectedSocket
 } from "@nestjs/websockets";
 import { ChatService } from "./chat.service";
-import { Server, Socket } from "socket.io";
+import { Socket } from "socket.io";
 import { User } from "src/user/entities/user.entity";
+import { CreateRoomDto } from "./dto/create-room.dto";
 
 @WebSocketGateway()
 export class ChatGateway {
@@ -28,8 +28,13 @@ export class ChatGateway {
 	}
 
 	@SubscribeMessage("join_room")
-	createRoom(@MessageBody() room: string, @ConnectedSocket() socket: Socket) {
-		socket.join(room);
+	async createRoom(
+		@MessageBody() createRoomDto: CreateRoomDto,
+		@ConnectedSocket() socket: Socket
+	) {
+		const admin = await this.chatService.getUserFromSocket(socket);
+		const room = await this.chatService.createRoom(createRoomDto, admin);
+		socket.join(room.name);
 	}
 
 	@SubscribeMessage("send_message")

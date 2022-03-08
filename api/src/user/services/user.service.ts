@@ -3,7 +3,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import axios from "axios";
 import { Connection, Repository } from "typeorm";
 import { CreateUserDto } from "../dtos/create-user.dto";
-import { UpdateUserDto } from "../dtos/update-user.dto";
 import { DatabaseFile } from "../entities/database-file.entity";
 import { User } from "../entities/user.entity";
 import { DatabaseFilesService } from "./database-files.service";
