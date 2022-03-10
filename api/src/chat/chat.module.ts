@@ -8,10 +8,11 @@ import { JwtModule } from "@nestjs/jwt";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Room } from "./entities/room.entity";
 import { ChatController } from "./controllers/chat.controller";
-import { RoomController } from './controllers/room.controller';
-import { RoomRequestController } from './controllers/room-request.controller';
-import { RoomRequestService } from './services/room-request.service';
-import { RoomService } from './services/room.service';
+import { RoomController } from "./controllers/room.controller";
+import { RoomRequestController } from "./controllers/room-request.controller";
+import { RoomRequestService } from "./services/room-request.service";
+import { RoomService } from "./services/room.service";
+import { RoomRequest } from "./entities/room-request.entity";
 
 @Module({
 	imports: [
@@ -25,7 +26,7 @@ import { RoomService } from './services/room.service';
 				}
 			})
 		}),
-		TypeOrmModule.forFeature([Room])
+		TypeOrmModule.forFeature([Room, RoomRequest])
 	],
 	controllers: [ChatController, RoomController, RoomRequestController],
 	providers: [ChatGateway, ChatService, AuthService, RoomRequestService, RoomService]

@@ -1,11 +1,16 @@
 import {
+	BadRequestException,
 	Body,
+	ConflictException,
 	Controller,
 	Get,
+	InternalServerErrorException,
+	NotFoundException,
 	Param,
 	Post,
 	Query,
 	Req,
+	UnauthorizedException,
 	UseGuards
 } from "@nestjs/common";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
@@ -34,13 +39,60 @@ export class RoomController {
 		return await this.roomService.findOneWithMembers(roomName);
 	}
 
+	//! Create an Errors Messages Enum And Group it By Controller
+
 	@Post("/add-member")
 	async addMemberToRoom(
 		@Query("roomName") roomName: string,
 		@Query("login") login: string
 	): Promise<Room> {
-		console.log(login);
-		return await this.roomService.addMember(roomName, login);
+		//TODO: Only Allow this OP to a room admin user or som1 who just got invited by admin
+		//TODO: Search for the user to be added in room-requests,
+		//TODO: by reciever is him and creator is admin and vice versa,
+		//TODO: if there is no requests, or requests are not accepted,
+		//TODO: throw Unauthorized Exception
+		let room: Room;
+		try {
+			room = await this.roomService.addMember(roomName, login);
+		} catch (error) {
+			if (error.message === "Room not found")
+				throw new NotFoundException(error.message);
+			else if (error.message === "User not found")
+				throw new NotFoundException(error.message);
+			else if (error.message === "User is already a member in the room")
+				throw new BadRequestException(error.message);
+			else if (
+				error.message ===
+				"User is not invited to the room or room request is not accepted"
+			)
+				throw new BadRequestException(error.message);
+			else throw new InternalServerErrorException(error.message);
+		}
+		return room;
+	}
+
+	@Post("remove-member")
+	async removeMember(
+		@Query("roomName") roomName: string,
+		@Query("login") login: string,
+		@Req() req: RequestWithUser
+	): Promise<Room> {
+		//TODO: Only Allow this OP to a room admin user
+		let room: Room;
+		try {
+			room = await this.roomService.removeMember(roomName, login, req.user);
+		} catch (error) {
+			if (error.message === "Room not found")
+				throw new NotFoundException(error.message);
+			else if (error.message === "User not found")
+				throw new NotFoundException(error.message);
+			else if (error.message === "User is not a member in this room")
+				throw new BadRequestException(error.message);
+			else if (error.message === "Only admin can remove members")
+				throw new UnauthorizedException(error.message);
+			else throw new InternalServerErrorException(error.message);
+		}
+		return room;
 	}
 
 	@Post("create")

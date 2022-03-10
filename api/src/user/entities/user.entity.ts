@@ -1,3 +1,4 @@
+import { RoomRequest } from "src/chat/entities/room-request.entity";
 import { Room } from "src/chat/entities/room.entity";
 import {
 	Entity,
@@ -40,6 +41,12 @@ export class User {
 
 	@OneToMany(type => FriendRequest, friendRequest => friendRequest.reciever)
 	receivedFriendRequests: FriendRequest[];
+
+	@OneToMany(type => RoomRequest, roomRequest => roomRequest.creator)
+	sentRoomRequests: RoomRequest[];
+
+	@OneToMany(type => RoomRequest, roomRequest => roomRequest.reciever)
+	receivedRoomRequests: RoomRequest[];
 
 	@Column({ default: "online" })
 	status: string;
