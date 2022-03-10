@@ -153,6 +153,12 @@ export class RoomRequestService {
 		let roomRequest = await this.findOneWithCreator(requestId);
 		if (roomRequest.creator.id === responder.id)
 			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF);
+		if (roomRequest.reciever.id !== responder.id)
+			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_ISNT_FOR_YOU);
+		if (roomRequest.status !== "pending")
+			throw new Error(
+				ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_IS_ALREADY_RESPONDED
+			);
 		roomRequest.status = requestStatus;
 		roomRequest = await this.roomRequestRepository.save(roomRequest);
 		if (roomRequest.status === "accepted")
