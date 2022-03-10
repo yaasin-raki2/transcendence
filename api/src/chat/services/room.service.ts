@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { User } from "src/user/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Room } from "../entities/room.entity";
@@ -6,11 +6,13 @@ import { Repository } from "typeorm";
 import { CreateRoomDto } from "../dto/create-room.dto";
 import { UserService } from "src/user/services/user.service";
 import { RoomRequestService } from "./room-request.service";
+import { ChatErrors } from "src/core/errors/chat-errors.enum";
 
 @Injectable()
 export class RoomService {
 	constructor(
 		@InjectRepository(Room) private readonly roomRepository: Repository<Room>,
+		@Inject(forwardRef(() => RoomRequestService))
 		private readonly roomRequestService: RoomRequestService,
 		private readonly userService: UserService
 	) {}
@@ -33,7 +35,7 @@ export class RoomService {
 	async createRoom(createRoomDto: CreateRoomDto, admin: User): Promise<Room> {
 		let room: Room;
 		room = await this.findOne(createRoomDto.name);
-		if (room) throw new Error("Room already exists.");
+		if (room) throw new Error(ChatErrors.ROOM_ALREADY_EXISTS);
 		const roomInfo = { ...createRoomDto, admin };
 		room = await this.roomRepository.create(roomInfo as Object);
 		return this.roomRepository.save(room);
@@ -44,7 +46,7 @@ export class RoomService {
 		const room = await this.findOneWithMembers(roomName);
 		const member = await this.userService.findOneByLogging(login);
 		if (room.members.includes(member))
-			throw new Error("User is already a member of this room");
+			throw new Error(ChatErrors.USER_IS_ALREADY_A_MEMBER_OF_THIS_ROOM);
 		//!: Search for the user to be added in room-requests,
 		//!: by reciever is him and creator is admin and vice versa,
 		//!: if there is no requests, or requests are not accepted,
@@ -65,18 +67,20 @@ export class RoomService {
 			);
 		if (!found1 && !found2)
 			throw new Error(
-				"User is not invited to the room or room request is not accepted"
+				ChatErrors.USER_IS_NOT_INVITED_TO_ROOM_OR_ROOM_REQUEST_IS_NOT_ACCEPTED
 			);
+
 		room.members = [...room.members, member];
 		return this.roomRepository.save(room);
 	}
 
 	async removeMember(roomName: string, login: string, user: User): Promise<Room> {
 		const room = await this.findOneWithMembers(roomName);
-		if (user.id !== room.admin.id) throw new Error("Only admin can remove members");
+		if (user.id !== room.admin.id)
+			throw new Error(ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_REMOVE_A_MEMBER);
 		const member = await this.userService.findOneByLogging(login);
 		if (!room.members.includes(member))
-			throw new Error("User is not a member of this room");
+			throw new Error(ChatErrors.USER_IS_NOT_A_MEMBER_OF_THIS_ROOM);
 		room.members = room.members.filter(m => m.logging !== member.logging);
 		return await this.roomRepository.save(room);
 	}

@@ -5,12 +5,15 @@ import {
 	Get,
 	InternalServerErrorException,
 	NotFoundException,
+	Param,
 	Post,
 	Req,
+	UnauthorizedException,
 	UseGuards
 } from "@nestjs/common";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { RequestWithUser } from "src/auth/interfaces/request-with-user.interface";
+import { ChatErrors } from "src/core/errors/chat-errors.enum";
 import { CreateRoomRequestDto } from "../dto/create-room-request.dto";
 import { UpdateRoomRequestDto } from "../dto/update-room-request";
 import { RoomRequest } from "../entities/room-request.entity";
@@ -30,6 +33,23 @@ export class RoomRequestController {
 	@UseGuards(JwtGuard)
 	async getReceivedRoomRequests(@Req() req: RequestWithUser): Promise<RoomRequest[]> {
 		return await this.roomRequestService.findAllByReciever(req.user.logging);
+	}
+
+	@Get("/:id")
+	@UseGuards(JwtGuard)
+	async getRoomRequest(
+		@Param("id") id: number,
+		@Req() req: RequestWithUser
+	): Promise<RoomRequest> {
+		const roomRequest = await this.roomRequestService.findOneWithAllRelations(id);
+		if (
+			roomRequest.creator.id !== req.user.id &&
+			roomRequest.reciever.id !== req.user.id
+		)
+			throw new UnauthorizedException(
+				ChatErrors.YOU_DONT_HAVE_PERMISSION_TO_DO_THIS
+			);
+		return roomRequest;
 	}
 
 	@Post("send")
@@ -55,10 +75,19 @@ export class RoomRequestController {
 		try {
 			await this.roomRequestService.respond(dto, req.user);
 		} catch (error) {
-			if (error.message === "You can't respond to your own request")
-				throw new BadRequestException(error.message);
-			else if (error.message === "Room Request not found")
+			if (error.message === ChatErrors.ROOM_REQUEST_NOT_FOUND)
 				throw new NotFoundException(error.message);
+			if (
+				error.message ===
+				ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_ISNT_FOR_YOU
+			)
+				throw new UnauthorizedException(error.message);
+			if (
+				error.message === ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF ||
+				error.message ===
+					ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_IS_ALREADY_RESPONDED
+			)
+				throw new BadRequestException(error.message);
 			throw new InternalServerErrorException(error.message);
 		}
 	}

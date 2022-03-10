@@ -13,6 +13,7 @@ import { RoomRequestController } from "./controllers/room-request.controller";
 import { RoomRequestService } from "./services/room-request.service";
 import { RoomService } from "./services/room.service";
 import { RoomRequest } from "./entities/room-request.entity";
+import { UserService } from "src/user/services/user.service";
 
 @Module({
 	imports: [
@@ -29,6 +30,13 @@ import { RoomRequest } from "./entities/room-request.entity";
 		TypeOrmModule.forFeature([Room, RoomRequest])
 	],
 	controllers: [ChatController, RoomController, RoomRequestController],
-	providers: [ChatGateway, ChatService, AuthService, RoomRequestService, RoomService]
+	providers: [
+		ChatGateway,
+		ChatService,
+		AuthService,
+		RoomService,
+		RoomRequestService,
+		UserService
+	]
 })
 export class ChatModule {}

@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { ChatErrors } from "src/core/errors/chat-errors.enum";
 import { User } from "src/user/entities/user.entity";
 import { FriendRequest_Status } from "src/user/interfaces/friend-request-status.interface";
 import { UserService } from "src/user/services/user.service";
@@ -14,6 +15,7 @@ export class RoomRequestService {
 	constructor(
 		@InjectRepository(RoomRequest)
 		private readonly roomRequestRepository: Repository<RoomRequest>,
+		@Inject(forwardRef(() => RoomService))
 		private readonly roomService: RoomService,
 		private readonly userService: UserService
 	) {}
@@ -23,12 +25,64 @@ export class RoomRequestService {
 	}
 
 	async findOne(id: number): Promise<RoomRequest> {
-		return await this.roomRequestRepository.findOne(id);
+		const roomRequest = await this.roomRequestRepository.findOne(id);
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
 	}
 
 	async findOneWithRoom(id: number): Promise<RoomRequest> {
-		return await this.roomRequestRepository.findOne(id, {
+		const roomRequest = await this.roomRequestRepository.findOne(id, {
 			relations: ["room"]
+		});
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
+	}
+
+	async findOneWithCreator(id: number): Promise<RoomRequest> {
+		const roomRequest = await this.roomRequestRepository.findOne(id, {
+			relations: ["creator"]
+		});
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
+	}
+
+	async findOneWithReciever(id: number): Promise<RoomRequest> {
+		const roomRequest = await this.roomRequestRepository.findOne(id, {
+			relations: ["reciever"]
+		});
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
+	}
+
+	async findOneWithCreatorAndReciever(id: number): Promise<RoomRequest> {
+		const roomRequest = await this.roomRequestRepository.findOne(id, {
+			relations: ["creator", "reciever"]
+		});
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
+	}
+
+	async findOneWithAllRelations(id: number): Promise<RoomRequest> {
+		const relations = this.roomRequestRepository.metadata.relations.map(
+			relation => relation.propertyName
+		);
+		const roomRequest = await this.roomRequestRepository.findOne(id, {
+			relations: [...relations, "room.members", "room.admin"]
+		});
+		if (!roomRequest) throw new Error(ChatErrors.ROOM_REQUEST_NOT_FOUND);
+		return roomRequest;
+	}
+
+	async findExistingRoomRequest(
+		creator: number,
+		reciever: number,
+		roomName: string
+	): Promise<RoomRequest> {
+		return await this.roomRequestRepository.findOne({
+			where: [
+				{ creator, reciever, roomName },
+				{ creator: reciever, reciever: creator, roomName }
+			]
 		});
 	}
 
@@ -43,14 +97,21 @@ export class RoomRequestService {
 			recieverLogin !== room.admin.logging
 		)
 			throw new Error(
-				"You can't send a request to enter a room to a non admin user"
+				ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_ENTER_A_ROOM_TO_A_NON_ADMIN_USER
 			);
 		if (creator.logging === recieverLogin)
-			throw new Error("You can't send a request to yourself");
+			throw new Error(ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_YOURSELF);
 		if (room.members.includes(creator) && creator.logging !== room.admin.logging)
-			throw new Error("Only the admin of this room can send a request");
+			throw new Error(ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_SEND_A_REQUEST);
 		if (room.members.includes(reciever) && reciever.logging !== room.admin.logging)
-			throw new Error("You can't send a request to a member of the room");
+			throw new Error(ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_A_MEMBER_OF_THE_ROOM);
+		const existingRoomRequest = await this.findExistingRoomRequest(
+			creator.id,
+			reciever.id,
+			roomName
+		);
+		if (existingRoomRequest)
+			throw new Error(ChatErrors.YOU_ALREADY_HAVE_A_REQUEST_TO_ENTER_THIS_ROOM);
 		const roomRequest = await this.roomRequestRepository.create({
 			room,
 			creator,
@@ -89,19 +150,9 @@ export class RoomRequestService {
 		{ requestId, requestStatus, roomName }: UpdateRoomRequestDto,
 		responder: User
 	): Promise<RoomRequest> {
-		let roomRequest: RoomRequest;
-		try {
-			roomRequest = await this.findOneWithRoom(requestId);
-		} catch (error) {
-			if (!roomRequest) throw new Error("Room Request not found");
-			throw new Error();
-		}
-		if (
-			roomRequest.reciever.id === responder.id ||
-			roomRequest.status !== "pending"
-		) {
-			throw new Error("You can't respond to your own request");
-		}
+		let roomRequest = await this.findOneWithCreator(requestId);
+		if (roomRequest.creator.id === responder.id)
+			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF);
 		roomRequest.status = requestStatus;
 		roomRequest = await this.roomRequestRepository.save(roomRequest);
 		if (roomRequest.status === "accepted")
@@ -117,6 +168,7 @@ export class RoomRequestService {
 		roomName: string
 	): Promise<RoomRequest> {
 		return await this.roomRequestRepository.findOne({
+			relations: ["creator", "reciever", "room"],
 			where: [
 				{ creator: { id: creator } },
 				{ reciever: { id: reciever } },

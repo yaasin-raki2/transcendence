@@ -15,6 +15,8 @@ import {
 } from "@nestjs/common";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { RequestWithUser } from "src/auth/interfaces/request-with-user.interface";
+import { ChatErrors } from "src/core/errors/chat-errors.enum";
+import { UserErrors } from "src/core/errors/user-errors.enum";
 import { CreateRoomDto } from "../dto/create-room.dto";
 import { Room } from "../entities/room.entity";
 import { RoomService } from "../services/room.service";
@@ -55,15 +57,15 @@ export class RoomController {
 		try {
 			room = await this.roomService.addMember(roomName, login);
 		} catch (error) {
-			if (error.message === "Room not found")
+			if (error.message === ChatErrors.ROOM_NOT_FOUND)
 				throw new NotFoundException(error.message);
-			else if (error.message === "User not found")
+			else if (error.message === UserErrors.USER_NOT_FOUND)
 				throw new NotFoundException(error.message);
-			else if (error.message === "User is already a member in the room")
+			else if (error.message === ChatErrors.USER_IS_ALREADY_A_MEMBER_OF_THIS_ROOM)
 				throw new BadRequestException(error.message);
 			else if (
 				error.message ===
-				"User is not invited to the room or room request is not accepted"
+				ChatErrors.USER_IS_NOT_INVITED_TO_ROOM_OR_ROOM_REQUEST_IS_NOT_ACCEPTED
 			)
 				throw new BadRequestException(error.message);
 			else throw new InternalServerErrorException(error.message);
@@ -82,13 +84,16 @@ export class RoomController {
 		try {
 			room = await this.roomService.removeMember(roomName, login, req.user);
 		} catch (error) {
-			if (error.message === "Room not found")
+			if (error.message === ChatErrors.ROOM_NOT_FOUND)
 				throw new NotFoundException(error.message);
-			else if (error.message === "User not found")
+			else if (error.message === UserErrors.USER_NOT_FOUND)
 				throw new NotFoundException(error.message);
-			else if (error.message === "User is not a member in this room")
+			else if (error.message === ChatErrors.USER_IS_NOT_A_MEMBER_OF_THIS_ROOM)
 				throw new BadRequestException(error.message);
-			else if (error.message === "Only admin can remove members")
+			else if (
+				error.message ===
+				ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_REMOVE_A_MEMBER
+			)
 				throw new UnauthorizedException(error.message);
 			else throw new InternalServerErrorException(error.message);
 		}
