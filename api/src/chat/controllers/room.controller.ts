@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	InternalServerErrorException,
 	NotFoundException,
@@ -16,6 +17,7 @@ import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { RequestWithUser } from "src/auth/interfaces/request-with-user.interface";
 import { ChatErrors } from "src/core/errors/chat-errors.enum";
 import { UserErrors } from "src/core/errors/user-errors.enum";
+import { DeleteResult } from "typeorm";
 import { CreateRoomDto } from "../dto/create-room.dto";
 import { Room } from "../entities/room.entity";
 import { RoomService } from "../services/room.service";
@@ -26,26 +28,48 @@ export class RoomController {
 
 	@Get()
 	async getAllRooms(): Promise<Room[]> {
-		return await this.roomService.findAll();
+		let rooms: Room[];
+		try {
+			rooms = await this.roomService.findAll();
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+		return rooms;
 	}
 
 	@Get("/:roomName")
 	async getRoom(@Param("roomName") roomName: string): Promise<Room> {
-		console.log(roomName);
-		return await this.roomService.findOne(roomName);
+		let room: Room;
+		try {
+			room = await this.roomService.findOne(roomName);
+		} catch (error) {
+			if (error.message === ChatErrors.ROOM_NOT_FOUND)
+				throw new NotFoundException(error.message);
+			else throw new InternalServerErrorException(error.message);
+		}
+		return room;
 	}
 
 	@Get("/:roomName/members")
+	@UseGuards(JwtGuard)
 	async getRoomWithMembers(@Param("roomName") roomName: string): Promise<Room> {
-		return await this.roomService.findOneWithMembers(roomName);
+		let room: Room;
+		try {
+			room = await this.roomService.findOneWithMembers(roomName);
+		} catch (error) {
+			if (error.message === ChatErrors.ROOM_NOT_FOUND)
+				throw new NotFoundException(error.message);
+			else throw new InternalServerErrorException(error.message);
+		}
+		return room;
 	}
 
 	//! Create an Errors Messages Enum And Group it By Controller
 
 	@Post("/add-member")
+	@UseGuards(JwtGuard)
 	async addMemberToRoom(
-		@Query("roomName") roomName: string,
-		@Query("login") login: string
+		@Body() { roomName, login }: { roomName: string; login: string }
 	): Promise<Room> {
 		//TODO: Only Allow this OP to a room admin user or som1 who just got invited by admin
 		//TODO: Search for the user to be added in room-requests,
@@ -72,10 +96,10 @@ export class RoomController {
 		return room;
 	}
 
-	@Post("remove-member")
+	@Delete("remove-member")
+	@UseGuards(JwtGuard)
 	async removeMember(
-		@Query("roomName") roomName: string,
-		@Query("login") login: string,
+		@Body() { roomName, login }: { roomName: string; login: string },
 		@Req() req: RequestWithUser
 	): Promise<Room> {
 		//TODO: Only Allow this OP to a room admin user
@@ -101,8 +125,39 @@ export class RoomController {
 
 	@Post("create")
 	@UseGuards(JwtGuard)
-	async createRoom(@Body() createRoomDto: CreateRoomDto, @Req() req: RequestWithUser) {
-		const room = await this.roomService.createRoom(createRoomDto, req.user);
+	async createRoom(
+		@Body() createRoomDto: CreateRoomDto,
+		@Req() req: RequestWithUser
+	): Promise<void> {
+		try {
+			await this.roomService.createRoom(createRoomDto, req.user);
+		} catch (error) {
+			if (error.message === ChatErrors.ROOM_ALREADY_EXISTS)
+				throw new BadRequestException(error.message);
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	@Delete("delete/:roomName")
+	@UseGuards(JwtGuard)
+	async deleteRoom(
+		@Param("roomName") roomName: string,
+		@Req() req: RequestWithUser
+	): Promise<DeleteResult> {
+		let result: DeleteResult;
+		try {
+			result = await this.roomService.deleteRoom(roomName, req.user);
+		} catch (error) {
+			if (error.message === ChatErrors.ROOM_NOT_FOUND)
+				throw new NotFoundException(error.message);
+			if (
+				error.message ===
+				ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_DELETE_THIS_ROOM
+			)
+				throw new UnauthorizedException(error.message);
+			throw new InternalServerErrorException(error.message);
+		}
+		return result;
 	}
 
 	@Post("join")
@@ -118,4 +173,8 @@ export class RoomController {
 		// Join Room
 		return true;
 	}
+
+	// TODO: Send a message and recieve it from another user. then persist to DB
+
+	// TODO: Joining a Room to start chating
 }

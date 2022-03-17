@@ -150,17 +150,12 @@ export class RoomRequestService {
 		{ requestId, requestStatus, roomName }: UpdateRoomRequestDto,
 		responder: User
 	): Promise<RoomRequest> {
-		let roomRequest = await this.findOneWithCreator(requestId);
+		let roomRequest = await this.findOneWithAllRelations(requestId);
 		if (roomRequest.creator.id === responder.id)
 			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF);
-		if (roomRequest.reciever.id !== responder.id)
-			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_ISNT_FOR_YOU);
-		if (roomRequest.status !== "pending")
-			throw new Error(
-				ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_IS_ALREADY_RESPONDED
-			);
 		roomRequest.status = requestStatus;
 		roomRequest = await this.roomRequestRepository.save(roomRequest);
+		console.log("huh");
 		if (roomRequest.status === "accepted")
 			await this.roomService.addMember(roomName, responder.logging);
 		//TODO: send notification to the other user
@@ -174,7 +169,6 @@ export class RoomRequestService {
 		roomName: string
 	): Promise<RoomRequest> {
 		return await this.roomRequestRepository.findOne({
-			relations: ["creator", "reciever", "room"],
 			where: [
 				{ creator: { id: creator } },
 				{ reciever: { id: reciever } },

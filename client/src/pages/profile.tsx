@@ -1,9 +1,9 @@
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "../components/button";
 import { useLazyGetUserByIdQuery } from "../features/users/users.slice";
 
-export const Profile = () => {
+export const Profile: FC = () => {
   const [value, setValue] = useState<number>(1);
 
   const [getUserById, user] = useLazyGetUserByIdQuery({

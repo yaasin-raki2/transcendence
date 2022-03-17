@@ -23,13 +23,6 @@ export class UserService {
 		if (user) throw new Error("User already exists");
 		user = await this.usersRepository.create(createUserDto);
 		user = await this.usersRepository.save(user);
-		const profileImageBuffer = await this.imageUrlToBuffer(createUserDto.image_url);
-		const { id } = await this.addAvatar(
-			user.id,
-			profileImageBuffer,
-			createUserDto.logging
-		);
-		user.avatarId = id;
 		return user;
 	}
 
@@ -162,5 +155,12 @@ export class UserService {
 
 	async findOneWithRooms(id: number): Promise<User> {
 		return await this.usersRepository.findOne(id, { relations: ["rooms"] });
+	}
+
+	async findOneWithAllRelations(id: number): Promise<User> {
+		const relations = this.usersRepository.metadata.relations.map(
+			relation => relation.propertyName
+		);
+		return await this.usersRepository.findOne(id, { relations });
 	}
 }

@@ -1,8 +1,13 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import {
+	forwardRef,
+	Inject,
+	Injectable,
+	InternalServerErrorException
+} from "@nestjs/common";
 import { User } from "src/user/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Room } from "../entities/room.entity";
-import { Repository } from "typeorm";
+import { DeleteResult, DeleteWriteOpResultObject, Repository } from "typeorm";
 import { CreateRoomDto } from "../dto/create-room.dto";
 import { UserService } from "src/user/services/user.service";
 import { RoomRequestService } from "./room-request.service";
@@ -22,23 +27,41 @@ export class RoomService {
 	}
 
 	async findOne(name: string): Promise<Room> {
-		return await this.roomRepository.findOne({ name }, { relations: ["admin"] });
+		const room = await this.roomRepository.findOne(
+			{ name },
+			{ relations: ["admin"] }
+		);
+		if (!room) throw new Error(ChatErrors.ROOM_NOT_FOUND);
+		return room;
 	}
 
 	async findOneWithMembers(name: string): Promise<Room> {
-		return await this.roomRepository.findOne(
+		const room = await this.roomRepository.findOne(
 			{ name },
 			{ relations: ["admin", "members"] }
 		);
+		if (!room) throw new Error(ChatErrors.ROOM_NOT_FOUND);
+		return room;
 	}
 
 	async createRoom(createRoomDto: CreateRoomDto, admin: User): Promise<Room> {
 		let room: Room;
-		room = await this.findOne(createRoomDto.name);
+		try {
+			room = await this.findOne(createRoomDto.name);
+		} catch (e) {
+			if (e.message !== ChatErrors.ROOM_NOT_FOUND)
+				throw new InternalServerErrorException(e.message);
+		}
 		if (room) throw new Error(ChatErrors.ROOM_ALREADY_EXISTS);
 		const roomInfo = { ...createRoomDto, admin };
 		room = await this.roomRepository.create(roomInfo as Object);
-		return this.roomRepository.save(room);
+		try {
+			room = await this.roomRepository.save(room);
+		} catch (e) {
+			console.log("save: ", e.message);
+			throw new Error(e.message);
+		}
+		return room;
 	}
 
 	async addMember(roomName: string, login: string): Promise<Room> {
@@ -83,5 +106,12 @@ export class RoomService {
 			throw new Error(ChatErrors.USER_IS_NOT_A_MEMBER_OF_THIS_ROOM);
 		room.members = room.members.filter(m => m.logging !== member.logging);
 		return await this.roomRepository.save(room);
+	}
+
+	async deleteRoom(roomName: string, user: User): Promise<DeleteResult> {
+		const room = await this.findOne(roomName);
+		if (user.id !== room.admin.id)
+			throw new Error(ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_DELETE_THIS_ROOM);
+		return await this.roomRepository.delete(room.id);
 	}
 }

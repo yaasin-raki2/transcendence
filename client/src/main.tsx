@@ -10,6 +10,9 @@ import { User } from "./pages/user";
 import { Friends } from "./pages/friends";
 import { RecievedFriendRequests } from "./pages/recieved-friend-requests";
 import { Chat } from "./pages/chat";
+import { Rooms } from "./pages/rooms";
+import { Mock } from "./pages/mock";
+import { RecievedAndSentRoomRequests } from "./pages/recieved&sent-room-requests";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -19,6 +22,12 @@ ReactDOM.render(
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/room" element={<Rooms />} />
+          <Route
+            path="room/recieved-sent-room-requests"
+            element={<RecievedAndSentRoomRequests />}
+          />
+          <Route path="/mock" element={<Mock />} />
           <Route path="/user/:id" element={<User />} />
           <Route path="/friends/:id" element={<Friends />} />
           <Route

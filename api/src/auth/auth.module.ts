@@ -5,6 +5,7 @@ import { UserModule } from "src/user/user.module";
 import { UserService } from "src/user/services/user.service";
 import { JwtModule } from "@nestjs/jwt";
 import { TwoFactorAuthenticationService } from "./services/two-factor-authentication.service";
+import { AuthMockController } from "./mocks/auth.controller.mock";
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { TwoFactorAuthenticationService } from "./services/two-factor-authentica
 			})
 		})
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, AuthMockController],
 	providers: [AuthService, UserService, TwoFactorAuthenticationService],
 	exports: [AuthService, TwoFactorAuthenticationService]
 })

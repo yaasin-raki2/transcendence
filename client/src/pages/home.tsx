@@ -34,6 +34,8 @@ export const HomePage = () => {
   const [turnOff2FA] = useTurnOffTwoFactorAuthMutation();
   const [logout] = useLogoutMutation();
 
+  // TODO: Manual Login and SignUp for Mock users
+
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-yellow-500">
       <h1 className="text-center text-4xl font-bold">Home Page</h1>

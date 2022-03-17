@@ -4,15 +4,16 @@ import { io, Socket } from "socket.io-client";
 import ScrollToBottom from "react-scroll-to-bottom";
 import "./App.css";
 
-export const Chat = () => {
+let socket: Socket = {} as Socket;
+
+export const Chat: FC = () => {
   const [username, setUsername] = useState<string>("");
   const [room, setRoom] = useState<string>("");
   const [showChat, setShowChat] = useState<boolean>(false);
-  let socket: Socket = {} as Socket;
 
   const joinRoom = () => {
     if (username !== "" && room !== "") {
-      socket.emit("join_room", { name: room, state: "public" });
+      socket.emit("start_chating_in_room", { name: room, state: "public" });
       setShowChat(true);
     }
   };

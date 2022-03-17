@@ -6,7 +6,8 @@ import {
 	PrimaryGeneratedColumn,
 	OneToOne,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	ManyToOne
 } from "typeorm";
 import { Room_State } from "../interfaces/room-state.interface";
 
@@ -22,7 +23,7 @@ export class Room {
 	state: Room_State;
 
 	@JoinColumn({ name: "adminId" })
-	@OneToOne(type => User)
+	@ManyToOne(type => User)
 	admin: User;
 
 	@ManyToMany(type => User, user => user.rooms)

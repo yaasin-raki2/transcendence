@@ -14,5 +14,6 @@ export enum ChatErrors {
 	ROOM_ALREADY_EXISTS = "Room already exists",
 	YOU_DONT_HAVE_PERMISSION_TO_DO_THIS = "You don't have permission to do this",
 	YOU_CANT_RESPOND_TO_A_REQUEST_THAT_ISNT_FOR_YOU = "You can't respond to a request that isn't for you",
-	YOU_CANT_RESPOND_TO_A_REQUEST_THAT_IS_ALREADY_RESPONDED = "You can't respond to a request that is already responded"
+	YOU_CANT_RESPOND_TO_A_REQUEST_THAT_IS_ALREADY_RESPONDED = "You can't respond to a request that is already responded",
+	ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_DELETE_THIS_ROOM = "Only the admin of this room can delete this room"
 }
