@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import axios from "axios";
+import { UserErrors } from "src/core/errors/user-errors.enum";
 import { Connection, Repository } from "typeorm";
 import { CreateUserDto } from "../dtos/create-user.dto";
 import { DatabaseFile } from "../entities/database-file.entity";
@@ -28,32 +29,32 @@ export class UserService {
 
 	async findAll(): Promise<User[]> {
 		const users = await this.usersRepository.find();
-		if (users.length === 0) throw new Error("No users found");
+		if (users.length === 0) throw new Error(UserErrors.USER_NOT_FOUND);
 		return users;
 	}
 
 	async findOne(id: number): Promise<User> {
 		const user = await this.usersRepository.findOne(id);
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return user;
 	}
 
 	async findOneByLogging(logging: string): Promise<User> {
 		const user = await this.usersRepository.findOne({ where: [{ logging }] });
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return user;
 	}
 
 	async update(id: number, updateUserDto: any): Promise<User> {
 		const user = await this.usersRepository.findOne(id);
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		Object.assign(user, updateUserDto);
 		return this.usersRepository.save(user);
 	}
 
 	async remove(id: number) {
 		const user = await this.usersRepository.findOne(id);
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return this.usersRepository.remove(user);
 	}
 
@@ -96,7 +97,7 @@ export class UserService {
 		const user = await this.usersRepository.findOne(userId, {
 			relations: ["avatar"]
 		});
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return user;
 	}
 
@@ -124,21 +125,12 @@ export class UserService {
 		} catch (error) {
 			console.log(error);
 		}
-		if (!user) throw new Error("User not found");
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return user;
 	}
 
 	async findFriendsFromFriendRequests(id: number): Promise<User[]> {
-		let user: User;
-		try {
-			user = await this.findOneWithFriendsRequests(id);
-		} catch (error) {
-			if (error.message === "User not found") {
-				throw new Error("User not found");
-			} else {
-				throw new Error(error.message);
-			}
-		}
+		let user = await this.findOneWithFriendsRequests(id);
 		let friends: User[] = [];
 		user.receivedFriendRequests.forEach(friendRequest => {
 			if (friendRequest.status === "accepted") {
@@ -154,13 +146,17 @@ export class UserService {
 	}
 
 	async findOneWithRooms(id: number): Promise<User> {
-		return await this.usersRepository.findOne(id, { relations: ["rooms"] });
+		const user = await this.usersRepository.findOne(id, { relations: ["rooms"] });
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
+		return user;
 	}
 
 	async findOneWithAllRelations(id: number): Promise<User> {
 		const relations = this.usersRepository.metadata.relations.map(
 			relation => relation.propertyName
 		);
-		return await this.usersRepository.findOne(id, { relations });
+		const user = await this.usersRepository.findOne(id, { relations });
+		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
+		return user;
 	}
 }

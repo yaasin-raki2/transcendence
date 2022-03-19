@@ -14,6 +14,7 @@ import {
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { RequestWithUser } from "src/auth/interfaces/request-with-user.interface";
 import { ChatErrors } from "src/core/errors/chat-errors.enum";
+import { UserErrors } from "src/core/errors/user-errors.enum";
 import { CreateRoomRequestDto } from "../dto/create-room-request.dto";
 import { UpdateRoomRequestDto } from "../dto/update-room-request";
 import { RoomRequest } from "../entities/room-request.entity";
@@ -26,13 +27,30 @@ export class RoomRequestController {
 	@Get("sent")
 	@UseGuards(JwtGuard)
 	async getSentRoomRequests(@Req() req: RequestWithUser): Promise<RoomRequest[]> {
-		return await this.roomRequestService.findAllByCreator(req.user.logging);
+		let roomRequests: RoomRequest[];
+		try {
+			roomRequests = await this.roomRequestService.findAllByCreator(
+				req.user.logging
+			);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+		return roomRequests;
 	}
 
 	@Get("received")
 	@UseGuards(JwtGuard)
 	async getReceivedRoomRequests(@Req() req: RequestWithUser): Promise<RoomRequest[]> {
-		return await this.roomRequestService.findAllByReciever(req.user.logging);
+		let roomRequests: RoomRequest[];
+		try {
+			roomRequests = await this.roomRequestService.findAllByReciever(
+				req.user.logging
+			);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+		console.log(roomRequests);
+		return roomRequests;
 	}
 
 	@Get("/:id")
@@ -41,7 +59,14 @@ export class RoomRequestController {
 		@Param("id") id: number,
 		@Req() req: RequestWithUser
 	): Promise<RoomRequest> {
-		const roomRequest = await this.roomRequestService.findOneWithAllRelations(id);
+		let roomRequest: RoomRequest;
+		try {
+			roomRequest = await this.roomRequestService.findOneWithAllRelations(id);
+		} catch (error) {
+			if (error.message === ChatErrors.ROOM_REQUEST_NOT_FOUND)
+				throw new NotFoundException(error.message);
+			throw new InternalServerErrorException(error.message);
+		}
 		if (
 			roomRequest.creator.id !== req.user.id &&
 			roomRequest.reciever.id !== req.user.id
@@ -61,6 +86,25 @@ export class RoomRequestController {
 		try {
 			await this.roomRequestService.create(dto, req.user);
 		} catch (error) {
+			if (
+				error.message ===
+					ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_A_MEMBER_OF_THE_ROOM ||
+				error.message === ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_YOURSELF ||
+				error.message === ChatErrors.YOU_ALREADY_HAVE_A_REQUEST_TO_ENTER_THIS_ROOM
+			)
+				throw new BadRequestException(error.message);
+			if (
+				error.message === ChatErrors.ROOM_NOT_FOUND ||
+				error.message === UserErrors.USER_NOT_FOUND
+			)
+				throw new NotFoundException(error.message);
+			if (
+				error.message ===
+					ChatErrors.YOU_CANT_SEND_A_REQUEST_TO_ENTER_A_ROOM_TO_A_NON_ADMIN_USER ||
+				error.message ===
+					ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_SEND_A_REQUEST
+			)
+				throw new UnauthorizedException(error.message);
 			throw new InternalServerErrorException(error.message);
 		}
 	}

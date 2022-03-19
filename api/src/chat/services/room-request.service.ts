@@ -76,12 +76,13 @@ export class RoomRequestService {
 	async findExistingRoomRequest(
 		creator: number,
 		reciever: number,
-		roomName: string
+		name: string
 	): Promise<RoomRequest> {
 		return await this.roomRequestRepository.findOne({
+			relations: ["room"],
 			where: [
-				{ creator, reciever, roomName },
-				{ creator: reciever, reciever: creator, roomName }
+				{ creator, reciever, room: { name } },
+				{ creator: reciever, reciever: creator, room: { name } }
 			]
 		});
 	}
@@ -90,7 +91,9 @@ export class RoomRequestService {
 		{ roomName, recieverLogin }: CreateRoomRequestDto,
 		creator: User
 	): Promise<RoomRequest> {
+		console.log("1");
 		const room = await this.roomService.findOneWithMembers(roomName);
+		console.log("2");
 		const reciever = await this.userService.findOneByLogging(recieverLogin);
 		if (
 			creator.logging !== room.admin.logging &&
@@ -118,6 +121,7 @@ export class RoomRequestService {
 			reciever,
 			status: "pending"
 		});
+		console.log("3");
 		return await this.roomRequestRepository.save(roomRequest);
 	}
 
@@ -141,7 +145,7 @@ export class RoomRequestService {
 
 	async findAllByReciever(logging: string): Promise<RoomRequest[]> {
 		return await this.roomRequestRepository.find({
-			relations: ["reciever"],
+			relations: ["reciever", "room", "creator"],
 			where: [{ reciever: { logging } }]
 		});
 	}
@@ -175,6 +179,13 @@ export class RoomRequestService {
 				{ status },
 				{ room: { name: roomName } }
 			]
+		});
+	}
+
+	async findAllByMe(user: User): Promise<RoomRequest[]> {
+		return await this.roomRequestRepository.find({
+			relations: ["creator", "reciever", "room"],
+			where: [{ creator: { id: user.id } }, { reciever: { id: user.id } }]
 		});
 	}
 

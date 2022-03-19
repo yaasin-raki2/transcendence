@@ -1,11 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Room } from "../../interfaces/room";
+import { RoomRequest } from "../../interfaces/room-request.interface";
 import { Room_State } from "../../interfaces/room-state.interface";
 
 export const roomsApi = createApi({
   reducerPath: "roomsApi",
   baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:3000/api" }),
-  tagTypes: ["Room", "NewRoom", "NewMember"],
+  tagTypes: ["Room", "NewRoom", "NewMember", "RoomRequest"],
   endpoints: (builder) => ({
     getAllRooms: builder.query<Room[], void>({
       query: () => "room",
@@ -60,6 +61,29 @@ export const roomsApi = createApi({
       }),
       invalidatesTags: ["Room"],
     }),
+    getSentRoomRequests: builder.query<RoomRequest[], void>({
+      query: () => ({
+        url: "room-request/sent",
+        credentials: "include",
+      }),
+      providesTags: ["RoomRequest"],
+    }),
+    getReceivedRoomRequests: builder.query<RoomRequest[], void>({
+      query: () => ({
+        url: "room-request/received",
+        credentials: "include",
+      }),
+      providesTags: ["RoomRequest"],
+    }),
+    sendRoomRequest: builder.mutation<void, { roomName: string; recieverLogin: string }>({
+      query: (dto) => ({
+        url: `room-request/send`,
+        method: "POST",
+        body: dto,
+        credentials: "include",
+      }),
+      invalidatesTags: ["RoomRequest"],
+    }),
   }),
 });
 
@@ -71,4 +95,7 @@ export const {
   useAddMemberToRoomMutation,
   useRemoveMmeberFromRoomMutation,
   useDeleteRoomMutation,
+  useSendRoomRequestMutation,
+  useLazyGetSentRoomRequestsQuery,
+  useLazyGetReceivedRoomRequestsQuery,
 } = roomsApi;

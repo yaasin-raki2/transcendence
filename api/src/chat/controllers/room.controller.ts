@@ -8,7 +8,6 @@ import {
 	NotFoundException,
 	Param,
 	Post,
-	Query,
 	Req,
 	UnauthorizedException,
 	UseGuards
