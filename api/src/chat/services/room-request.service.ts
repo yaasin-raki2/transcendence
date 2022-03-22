@@ -91,9 +91,7 @@ export class RoomRequestService {
 		{ roomName, recieverLogin }: CreateRoomRequestDto,
 		creator: User
 	): Promise<RoomRequest> {
-		console.log("1");
 		const room = await this.roomService.findOneWithMembers(roomName);
-		console.log("2");
 		const reciever = await this.userService.findOneByLogging(recieverLogin);
 		if (
 			creator.logging !== room.admin.logging &&
@@ -121,7 +119,6 @@ export class RoomRequestService {
 			reciever,
 			status: "pending"
 		});
-		console.log("3");
 		return await this.roomRequestRepository.save(roomRequest);
 	}
 
@@ -159,7 +156,6 @@ export class RoomRequestService {
 			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF);
 		roomRequest.status = requestStatus;
 		roomRequest = await this.roomRequestRepository.save(roomRequest);
-		console.log("huh");
 		if (roomRequest.status === "accepted")
 			await this.roomService.addMember(roomName, responder.logging);
 		//TODO: send notification to the other user

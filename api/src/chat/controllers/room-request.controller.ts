@@ -49,7 +49,6 @@ export class RoomRequestController {
 		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
-		console.log(roomRequests);
 		return roomRequests;
 	}
 

@@ -18,6 +18,7 @@ export const Profile: FC = () => {
     if (file && file.type.substr(0, 5) === "image") {
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log(reader.result);
         setPreview(reader.result as string);
         setAvatar(file);
       };
@@ -72,11 +73,7 @@ export const Profile: FC = () => {
       ) : (
         <div {...getRootProps()}>
           <input {...getInputProps()} />
-          {isDragActive ? (
-            <p>Drop the files here ...</p>
-          ) : (
-            <Button text={"Select a file"} />
-          )}
+          {isDragActive ? <p>Drop the files here ...</p> : <Button text={"Select a file"} />}
         </div>
       )}
     </div>

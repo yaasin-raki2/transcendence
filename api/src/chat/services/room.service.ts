@@ -7,7 +7,7 @@ import {
 import { User } from "src/user/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Room } from "../entities/room.entity";
-import { DeleteResult, DeleteWriteOpResultObject, Repository } from "typeorm";
+import { DeleteResult, Repository } from "typeorm";
 import { CreateRoomDto } from "../dto/create-room.dto";
 import { UserService } from "src/user/services/user.service";
 import { RoomRequestService } from "./room-request.service";

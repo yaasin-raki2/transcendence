@@ -30,10 +30,7 @@ ReactDOM.render(
           <Route path="/mock" element={<Mock />} />
           <Route path="/user/:id" element={<User />} />
           <Route path="/friends/:id" element={<Friends />} />
-          <Route
-            path="/friends/recieved-requests/:id"
-            element={<RecievedFriendRequests />}
-          />
+          <Route path="/friends/recieved-requests/:id" element={<RecievedFriendRequests />} />
           <Route path="*" element={<p>There's nothing here!</p>} />
         </Routes>
       </BrowserRouter>

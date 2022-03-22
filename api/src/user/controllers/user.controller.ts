@@ -25,6 +25,7 @@ import { RequestWithUser } from "../../auth/interfaces/request-with-user.interfa
 import { Response } from "express";
 import { Readable } from "stream";
 import { readFileSync } from "fs";
+import { UserErrors } from "src/core/errors/user-errors.enum";
 
 @Controller("user")
 export class UserController {
@@ -81,7 +82,7 @@ export class UserController {
 	async getAvatar(
 		@Req() req: RequestWithUser,
 		@Res({ passthrough: true }) res: Response
-	): Promise<any> {
+	): Promise<StreamableFile> {
 		const user = await this.userService.getUserWithAvatar(req.user.id);
 
 		let avatar: Readable | Buffer | any;
@@ -103,6 +104,33 @@ export class UserController {
 		// !: read https://wanago.io/2021/11/01/api-nestjs-storing-files-postgresql-database/
 
 		// ?: 42 changed how they display images, you have to be logged in to intra in order to see it, we're fucked up, re architect the whole shit hhh
+	}
+
+	@Get("avatar_url/:id")
+	@UseGuards(JwtGuard)
+	async getAvatarUrl(
+		@Param("id") id: string,
+		@Res({ passthrough: true }) res: Response
+	): Promise<StreamableFile> {
+		let user: User;
+		try {
+			user = await this.userService.getUserWithAvatar(+id);
+		} catch (error) {
+			if (error.message === UserErrors.USER_NOT_FOUND)
+				throw new NotFoundException(error.message);
+			else throw new InternalServerErrorException(error.message);
+		}
+		let avatar: Readable | Buffer | any;
+		if (!user.avatar)
+			avatar = readFileSync(
+				"/Users/yerraqui/v/transcendence/api/assets/default_avatar.png"
+			);
+		else avatar = Readable.from(user.avatar.data);
+		res.set({
+			"Content-Disposition": `inline; filename="${user.logging}"`,
+			"Content-Type": "image"
+		});
+		return new StreamableFile(avatar);
 	}
 
 	@Get(":id")
