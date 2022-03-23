@@ -90,7 +90,7 @@ export class RoomRequestService {
 	async create(
 		{ roomName, recieverLogin }: CreateRoomRequestDto,
 		creator: User
-	): Promise<RoomRequest> {
+	): Promise<void> {
 		const room = await this.roomService.findOneWithMembers(roomName);
 		const reciever = await this.userService.findOneByLogging(recieverLogin);
 		if (
@@ -119,7 +119,10 @@ export class RoomRequestService {
 			reciever,
 			status: "pending"
 		});
-		return await this.roomRequestRepository.save(roomRequest);
+		console.log("nani");
+		const req = await this.roomRequestRepository.save(roomRequest);
+		console.log(req);
+		console.log("nani2");
 	}
 
 	async update(roomRequest: RoomRequest): Promise<RoomRequest> {
@@ -142,7 +145,7 @@ export class RoomRequestService {
 
 	async findAllByReciever(logging: string): Promise<RoomRequest[]> {
 		return await this.roomRequestRepository.find({
-			relations: ["reciever", "room", "creator"],
+			relations: ["reciever", "room", "creator", "room.admin"],
 			where: [{ reciever: { logging } }]
 		});
 	}
@@ -154,10 +157,14 @@ export class RoomRequestService {
 		let roomRequest = await this.findOneWithAllRelations(requestId);
 		if (roomRequest.creator.id === responder.id)
 			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_YOURSELF);
+		if (roomRequest.reciever.id !== responder.id)
+			throw new Error(ChatErrors.YOU_CANT_RESPOND_TO_A_REQUEST_THAT_ISNT_FOR_YOU);
 		roomRequest.status = requestStatus;
 		roomRequest = await this.roomRequestRepository.save(roomRequest);
 		if (roomRequest.status === "accepted")
-			await this.roomService.addMember(roomName, responder.logging);
+			if (responder.id === roomRequest.room.admin.id)
+				await this.roomService.addMember(roomName, roomRequest.creator.logging);
+			else await this.roomService.addMember(roomName, responder.logging);
 		//TODO: send notification to the other user
 		return roomRequest;
 	}
@@ -169,6 +176,7 @@ export class RoomRequestService {
 		roomName: string
 	): Promise<RoomRequest> {
 		return await this.roomRequestRepository.findOne({
+			relations: ["room", "creator", "reciever"],
 			where: [
 				{ creator: { id: creator } },
 				{ reciever: { id: reciever } },

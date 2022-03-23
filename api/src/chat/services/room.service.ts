@@ -92,7 +92,6 @@ export class RoomService {
 			throw new Error(
 				ChatErrors.USER_IS_NOT_INVITED_TO_ROOM_OR_ROOM_REQUEST_IS_NOT_ACCEPTED
 			);
-
 		room.members = [...room.members, member];
 		return this.roomRepository.save(room);
 	}
@@ -102,7 +101,8 @@ export class RoomService {
 		if (user.id !== room.admin.id)
 			throw new Error(ChatErrors.ONLY_THE_ADMIN_OF_THIS_ROOM_CAN_REMOVE_A_MEMBER);
 		const member = await this.userService.findOneByLogging(login);
-		if (!room.members.includes(member))
+		const test = room.members.find(mem => mem.id === member.id);
+		if (test.id !== member.id)
 			throw new Error(ChatErrors.USER_IS_NOT_A_MEMBER_OF_THIS_ROOM);
 		room.members = room.members.filter(m => m.logging !== member.logging);
 		return await this.roomRepository.save(room);

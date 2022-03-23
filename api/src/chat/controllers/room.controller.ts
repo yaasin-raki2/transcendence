@@ -176,4 +176,8 @@ export class RoomController {
 	// TODO: Send a message and recieve it from another user. then persist to DB
 
 	// TODO: Joining a Room to start chating
+
+	// TODO: Remove Member from Room
+
+	// TODO: When A User Created A Room, Add this room to it's room's list
 }

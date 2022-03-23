@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { FriendRequest_Status } from "../../interfaces/friend-request-status.interface";
 import { Room } from "../../interfaces/room";
 import { RoomRequest } from "../../interfaces/room-request.interface";
 import { Room_State } from "../../interfaces/room-state.interface";
@@ -19,7 +20,7 @@ export const roomsApi = createApi({
       }),
       providesTags: ["Room"],
     }),
-    getRoomWithMembers: builder.query<Room, number>({
+    getRoomWithMembers: builder.query<Room, string>({
       query: (roomName) => ({
         url: `room/${roomName}/members`,
         credentials: "include",
@@ -84,6 +85,18 @@ export const roomsApi = createApi({
       }),
       invalidatesTags: ["RoomRequest"],
     }),
+    respondToRoomRequest: builder.mutation<
+      void,
+      { roomName: string; requestId: number; requestStatus: FriendRequest_Status }
+    >({
+      query: (dto) => ({
+        url: `room-request/respond`,
+        method: "POST",
+        body: dto,
+        credentials: "include",
+      }),
+      invalidatesTags: ["RoomRequest", "Room"],
+    }),
   }),
 });
 
@@ -99,4 +112,5 @@ export const {
   useSendRoomRequestMutation,
   useLazyGetSentRoomRequestsQuery,
   useLazyGetReceivedRoomRequestsQuery,
+  useRespondToRoomRequestMutation,
 } = roomsApi;

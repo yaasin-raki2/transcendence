@@ -1,6 +1,9 @@
 import { FC } from "react";
 import { Button } from "../../components/button";
-import { useLazyGetReceivedRoomRequestsQuery } from "../../features/rooms/rooms.slice";
+import {
+  useLazyGetReceivedRoomRequestsQuery,
+  useRespondToRoomRequestMutation,
+} from "../../features/rooms/rooms.slice";
 import { Room } from "../../interfaces/room";
 
 interface IRecievedRoomRequestsProps {
@@ -10,6 +13,13 @@ interface IRecievedRoomRequestsProps {
 export const RecievedRoomRequests: FC<IRecievedRoomRequestsProps> = ({ rooms }) => {
   const [getReceivedRoomRequests, { data: receivedRoomRequests }] =
     useLazyGetReceivedRoomRequestsQuery();
+
+  const [respondToRoomRequest] = useRespondToRoomRequestMutation();
+  console.log(rooms);
+  console.log(receivedRoomRequests);
+
+  // TODO: Fix rooms![-RoomRequest.id-]
+
   return (
     <div className="flex flex-col justify-content items-center bg-white">
       <Button text="Recieved Room Requests" onClick={() => getReceivedRoomRequests()} />
@@ -20,13 +30,28 @@ export const RecievedRoomRequests: FC<IRecievedRoomRequestsProps> = ({ rooms }) 
             <h1 className="text-3xl p-4">{roomRequest.room.name}</h1>
             <h3 className="text-xl p-6 text-purple-600">{roomRequest.creator.logging}</h3>
           </div>
-          {roomRequest.reciever.id === rooms![roomRequest.id].admin.id ? (
+
+          {roomRequest?.reciever?.id === roomRequest?.room?.admin?.id ? (
             <div className="flex flex-col">
               <Button
                 text={`Accept ${roomRequest.creator.logging} to join ${roomRequest.room.name}`}
+                onClick={() =>
+                  respondToRoomRequest({
+                    requestId: roomRequest.id,
+                    requestStatus: "accepted",
+                    roomName: roomRequest.room.name,
+                  })
+                }
               />
               <Button
                 text={`Reject ${roomRequest.creator.logging} to join ${roomRequest.room.name}`}
+                onClick={() =>
+                  respondToRoomRequest({
+                    requestId: roomRequest.id,
+                    requestStatus: "rejected",
+                    roomName: roomRequest.room.name,
+                  })
+                }
               />
             </div>
           ) : (

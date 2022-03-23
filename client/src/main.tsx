@@ -13,6 +13,7 @@ import { Chat } from "./pages/chat";
 import { Rooms } from "./pages/rooms";
 import { Mock } from "./pages/mock";
 import { RecievedAndSentRoomRequests } from "./pages/recieved&sent-room-requests";
+import { RoomMembers } from "./pages/room-members";
 
 ReactDOM.render(
   <React.StrictMode>
@@ -23,6 +24,7 @@ ReactDOM.render(
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/room" element={<Rooms />} />
+          <Route path="/room/:roomName/members" element={<RoomMembers />} />
           <Route
             path="room/recieved-sent-room-requests"
             element={<RecievedAndSentRoomRequests />}
@@ -38,3 +40,5 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById("root")
 );
+
+// TODO: Add Room Admin Page

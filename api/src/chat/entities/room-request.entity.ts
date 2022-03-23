@@ -22,7 +22,7 @@ export class RoomRequest {
 	reciever: User;
 
 	@JoinColumn({ name: "roomId" })
-	@OneToOne(type => Room)
+	@ManyToOne(type => Room)
 	room: Room;
 
 	@Column()

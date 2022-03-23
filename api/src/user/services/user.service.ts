@@ -152,9 +152,9 @@ export class UserService {
 	}
 
 	async findOneWithAllRelations(id: number): Promise<User> {
-		const relations = this.usersRepository.metadata.relations.map(
-			relation => relation.propertyName
-		);
+		const relations = this.usersRepository.metadata.relations
+			.map(relation => relation.propertyName)
+			.filter(relation => relation !== "avatar");
 		const user = await this.usersRepository.findOne(id, { relations });
 		if (!user) throw new Error(UserErrors.USER_NOT_FOUND);
 		return user;
